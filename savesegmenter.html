@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+		<link rel="stylesheet" type="text/css" href="globalstyle.css" />
+		<style>
+textarea {
+	height:60px;
+	width:99vw;
+}
+		</style>
+		<meta charset="utf-8"/>
+		<title>存档分段工具</title>
+	</head>
+	<body>
+		你的存档：
+		<textarea id="save"></textarea>
+		<button onClick="segment()">分段</button>
+		<hr>
+		<div id="segments"></div>
+		<script>
+function segment() {
+	let save = document.getElementById("save").value
+	if (save.length > 300000) {
+		document.getElementById("segments").innerHTML = "你的存档未能分段，因为其长度超过了 300,000 个字符。"
+	} else {
+		let numSegments = Math.ceil(save.length / 30000)
+		let segmentLength = Math.ceil(save.length / numSegments)
+		let segments = []
+		for (let i = 0; i < numSegments; i++) {
+			segments.push(save.substring(segmentLength * i, segmentLength * (i + 1)))
+		}
+		document.getElementById("segments").innerHTML =
+			"该存档共有 <b>" + segments.length + "</b> 个分段" +
+			segments.map((x, i) =>
+				"<br><br>第 " + (i + 1) + " 段：<br><textarea>" + x + "</textarea>"
+			).join("")
+	}
+}
+		</script>
+	</body>
+</html>

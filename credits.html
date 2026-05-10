@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+	<link rel="stylesheet" type="text/css" href="globalstyle.css" />
+	<style>
+.popupScreen {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(0,0,0,0.5);
+	display: none;
+	z-index: 4;
+}
+.navigation {
+	height: 20px;
+	background-color: #330066;
+	color: #ffffff;
+	border-style: solid;
+	border-width: 2px;
+	border-color: #9933ff;
+}
+.popup {
+	position: fixed;
+	top: 20vh;
+	left: 20vw;
+	width: 60vw;
+	height: 60vh;
+	border-radius: 24px;
+	background-image: radial-gradient(circle,#330066,#190033);
+	border-style: solid;
+	border-color: #330066;
+	border-width: 3px;
+	z-index: 4;
+	overflow: auto;
+	word-wrap: break-word;
+	padding: 20px;
+	text-align: left;
+}
+h3, h4, h6 {
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+div, td {
+	vertical-align: top;
+}
+	</style>
+	<meta charset="utf-8"/>
+	<title>制作人员</title>
+</head>
+<body>
+	请注意，制作人员名单仍在整理中，并非所有人都在其中。<br>
+	如果您做出了贡献但尚未列出，请联系 alemaninc。<br><br>
+	点击名字以查看该人员的贡献。<br>
+	根据您当前的存档，某些更改可能会被隐藏以防剧透。
+	<div id="navigation"></div>
+	<hr>
+	<div id="credits"></div>
+	<div id="div_fancyPopupScreen" class="popupScreen">
+		<div id="div_fancyPopup" class="popup">
+			<span id="span_fancyPopupText"></span>
+			<br>
+			<span id="span_fancyPopupButtons"></span>
+		</div>
+	</div>
+	<script type="text/javascript" src="alemaninc_utility.js"></script>
+	<script type="text/javascript" src="break_eternity_alemaninc.js"></script>
+	<script type="text/javascript" src="emd_utility.js"></script>
+	<script>
+const save = JSON.parse(localStorage.getItem("save"))
+const notation = (save === null) ? "Mixed scientific" : (save.notation ?? "Mixed Scientific")
+
+function format(x, p = 0) {
+	return gformat(N(x), p, notation)
+}
+
+const EMDLevel = (save === null) ? Infinity : (save.EMDLevel ?? Infinity)
+
+const specialGrade = {
+	"alemaninc": { class: "Ω", color: "#0000ff", title: "首席开发者" },
+	"Celestial of Blob / hyperbolia": { class: "S+", color: "#fac112", title: "绝对天体" },
+	"nicodium": { class: "S", color: "#4285f4", title: "双重天体" },
+	"Stat Mark": { class: "S", color: "#00ffff", title: "熵之天体" },
+	"xhwzwka": { class: "S", color: "#ff0000", title: "谜之天体" }
+}
+
+function contributorColor(name) {
+	return (specialGrade[name] === undefined) ? "inherit" : specialGrade[name].color
+}
+
+/*
+等级描述：
+Ω		alemaninc
+S		像 alemaninc 但不是 alemaninc
+A		巨大影响
+B		对大多数玩家有用 / 有影响力
+C		较小的补充
+D		彩蛋 / 极其微小
+E		完全无意义
+*/
+
+const classes = ["E","E+","D/E","D-","D","D+","C/D","C-","C","C+","B/C","B-","B","B+","A/B","A-","A","A+","S/A","S-","S","S+","Ω"]
+
+function classToScore(x) {
+	if (x === "Ω") { return Infinity }
+	let pos = classes.indexOf(x)
+	return Math.exp(pos / Math.E)
+}
+
+function overallClass(arr) {
+	if (arr.length === 0) { return "F" }
+	let total = arr.map(x => classToScore(x)).reduce((a, b) => a + b)
+	for (let i = classes.length - 1; i >= 0; i--) {
+		if (total >= classToScore(classes[i])) { return classes[i] }
+	}
+}
+
+const categories = {
+	"Special": "致那些让这款游戏得以存在的人",
+	"Disinsection Crew": "致那些发现了烦人 Bug 的人",
+	"Exowriter": "致那些修正文本问题的人",
+	"Game Changer": "致那些改变了游戏实质内容的人",
+	"Scripter": "致那些将贡献直接写入代码的人",
+	"Stylist": "致那些试图整理界面的人",
+	"Technician": "致那些以各种杂项方式提供帮助的人",
+	"Village Elder": "致那些为社区做出贡献的人",
+	"Worldbuilder": "致那些为游戏增添风味的人"
+}
+
+function news(id, txt, lv, grd) {
+	return { text: "#" + id + " \"" + txt + "\"", EMDLevel: lv, class: grd }
+}
+
+function person(name) {
+	return "<button style=\"background-color:#000000;border-style:solid;border-width:1px;border-radius:10px;border-color:" + contributorColor(name) + ";color:" + contributorColor(name) + ";height:20px;\" onClick=\"showContributions('" + name + "')\">" + name + "</button>"
+}
+
+const contributions = {
+	// ![A-Z]
+	"10mart10": {
+		"Disinsection Crew": [
+			{ text: "指出了研究 V 破坏游戏的问题", EMDLevel: 6, class: "B/C" },
+			{ text: "指出了研究 6-9 不存在", EMDLevel: 5, class: "D" }
+		]
+	},
+	// A
+	"Acamaeda": {
+		"Disinsection Crew": [
+			{ text: "识别了游戏根本无法加载的一个案例<br>（详情：弱化的离线进度选项试图软上限一个非 <code>Decimal</code>）", EMDLevel: 1, class: "D" }
+		],
+		"Stylist": [
+			{ text: "建议了多个第 5 层颜色更改中的一个", EMDLevel: 5, class: "C" }
+		]
+	},
+	"alemaninc": {
+		"Special": [
+			{ text: "写了超过 25,000 行代码，看起来还能用", EMDLevel: 1, class: "Ω" }
+		]
+	},
+	"Alien714": {
+		"Disinsection Crew": [
+			{ text: "指出了虫洞自动装置破坏游戏的问题", EMDLevel: 5, class: "C" }
+		]
+	},
+	"anothernobody": {
+		"Disinsection Crew": [
+			{ text: "研究 6-9 无效", EMDLevel: 5, class: "D" }
+		],
+		"Game Changer": [
+			{ text: "建议了“将超频设为软上限起点”", EMDLevel: 1, class: "B" }
+		]
+	},
+	"arsaes": {
+		"Game Changer": [
+			{ text: "建议了声望确认", EMDLevel: 2, class: "B" }
+		]
+	},
+	"Aym": {
+		"Game Changer": [
+			{ text: "建议了以前的声望记录和构建存储", EMDLevel: 2, class: "B/C" }
+		]
+	},
+	// B
+	"badzad31(Davin)": {
+		"Disinsection Crew": [
+			{ text: "指出了 alemaninc 导致研究不可见的问题（与 " + person("Dragonus") + ", " + person("Hori") + " 和 " + person("Titus") + " 共享）", EMDLevel: 5, class: "D" }
+		]
+	},
+	"bestfweinds": {
+		"Exowriter": [
+			{ text: "指出了“Mastery unassignmnet（精通未分配）”的拼写错误", EMDLevel: 1, class: "E" }
+		]
+	},
+	"b<sub>la</sub>c<sub>k hole</sub>": {
+		"Disinsection Crew": [
+			{ text: "“你当前拥有第 5 层成就”", EMDLevel: 5, class: "D" }
+		],
+		"Exowriter": [
+			{ text: "识别出 𝕍1.1.16 条目中有“undefined”作为一个条目", EMDLevel: 1, class: "E" },
+			{ text: "指出了 𝕍1.3 条目首个 BALANCE 中“the”被错拼为“theu”", EMDLevel: 6, class: "E" }
+		],
+		"Village Elder": [
+			{ text: "将 FredBoat 加入了 Discord（有人用这个吗？）", EMDLevel: 1, class: "E" },
+			{ text: "建议了 Discord #bot-commands 频道（似乎也没人用）", EMDLevel: 1, class: "E" }
+		],
+		"Worldbuilder": [
+			{ text: "建议了新闻 ticker", EMDLevel: 1, class: "B" }
+		]
+	},
+	"BlazetheGameYT": {
+		"Stylist": [
+			{ text: "建议了多个第 5 层颜色更改中的一个", EMDLevel: 5, class: "C" },
+		],
+		"Worldbuilder": [
+			{ text: "建议了成就 913 “Axistential Dread”的名称", EMDLevel: 9, class: "D" }
+		]
+	},
+	// C
+	"Celestial of Blob / hyperbolia": {
+		"Disinsection Crew": [
+			{ text: "识别出有限棱镜升级实际上并未受限（与 " + person("Orrery") + " 共享）", EMDLevel: 8, class: "B" },
+			{ text: "识别出科学计数法无效。<br>alemaninc 是怎么把一个半数玩家都在用的计数法搞坏并发布到生产环境的？", EMDLevel: 1, class: "C" },
+			{ text: "识别出尝试更改页脚显示会导致游戏崩溃", EMDLevel: 1, class: "C" },
+			{ text: "识别出可能出现飞秒级别的扩张时间", EMDLevel: 1, class: "D" }
+		],
+		"Exowriter": [
+			{ text: "建议 " + person("Kaffe-work / IRAD") + " 在更新日志中添加逗号", EMDLevel: 1, class: "E" }
+		],
+		"Game Changer": [
+			{ text: "建议了研究 XI", EMDLevel: 8, class: "B" },
+			{ text: "间接建议了研究的研究包含 4 种不同的研究", EMDLevel: 8, class: "B/C" }
+		],
+		"Journalist": [
+			{ text: "启发了新闻条目 #326", EMDLevel: 8, class: "E" }
+		],
+		"Scripter": [
+			{ text: "写了一行代码修复了对第 8 层终局玩家至关重要的 Bug", EMDLevel: 8, class: "C" }
+		],
+		"Stylist": [
+			{ text: "建议了棱镜升级退款按钮着色", EMDLevel: 8, class: "B" },
+			{ text: "建议了完成某一层所有成就时的通知", EMDLevel: 1, class: "C" }
+		],
+		"Worldbuilder": [
+			{ text: "建议了查看以前故事条目的能力", EMDLevel: 2, class: "C" },
+			{ text: "命名了本体论三元组", EMDLevel: 8, class: "C" },
+			{ text: "贡献了一个 blob", EMDLevel: 1, class: "D" },
+			{ text: "建议了“Wrong game?”（进错游戏了？）隐藏成就", EMDLevel: 1, class: "D" }
+		]
+	},
+	"Crystalflare": {
+		"Disinsection Crew": [
+			{ text: "识别出通过负 时间速度更改系统时钟会破坏游戏", EMDLevel: 2, class: "E" }
+		]
+	},
+	// D
+	"disastranagant": {
+		"Disinsection Crew": [
+			{ text: "识别出由暗星触发的星尘重置没有给出全额星尘奖励", EMDLevel: 3, class: "C" }
+		]
+	},
+	"Dragonayzer": {
+		"Disinsection Crew": [
+			{ text: "指出了应该有一个选项来关闭“购买所有先前研究”", EMDLevel: 5, class: "C" }
+		]
+	},
+	"Dragonus": {
+		"Disinsection Crew": [
+			{ text: "指出了 alemaninc 导致研究不可见的问题（与 " + person("badzad31(Davin)") + ", " + person("Hori") + " 和 " + person("Titus") + " 共享）", EMDLevel: 5, class: "D" }
+		]
+	},
+	"Dreamare": {
+		"Disinsection Crew": [
+			{ text: "识别出成就 530 “大爆炸”被提前授予", EMDLevel: 5, class: "B" }
+		],
+		"Game Changer": [
+			{ text: "建议了星星配置的导入和导出", EMDLevel: 2, class: "B/C" }
+		]
+	},
+	"Dremion": {
+		"Stylist": [
+			{ text: "建议了在整个 𝕍1 中使用的页眉布局", EMDLevel: 1, class: "A/B" }
+		]
+	},
+	"ducdat0507 / duducat": {
+		"Stylist": [
+			{ text: "建议了多个第 5 层颜色更改中的一个", EMDLevel: 5, class: "D" }
+		]
+	},
+	// E
+	"Eris": {
+		"Disinsection Crew": [
+			{ text: "协助识别了恰好在目标值时研究完成未注册的问题（与 " + person("Northo") + " 共享）", EMDLevel: 5, class: "C/D" }
+		]
+	},
+	"eytanz": {
+		"Game Changer": [
+			{ text: "建议了超频热键", EMDLevel: 1, class: "B/C" }
+		],
+		"Stylist": [
+			{ text: "建议了精通行反转", EMDLevel: 1, class: "B" },
+			{ text: "建议了第一级标签页的重新排列", EMDLevel: 1, class: "D" }
+		]
+	},
+	// F
+	"FeynHS": {
+		"Disinsection Crew": [
+			{ text: "指出了如果从未玩过游戏则无法打开的问题（与 " + person("Lanie Carmelo") + " 和 " + person("reshrom") + " 共享）", EMDLevel: 1, class: "C/D" }
+		]
+	},
+	"FIQ": {
+		"Exowriter": [
+			{ text: "指出了成就 501 “某处的虫洞”没有像虫洞升级 5 “更多成就”暗示的那样有软上限<br>（软上限实际上在精通 101 上）", EMDLevel: 8, class: "C" },
+			{ text: "指出了使用现代界面时第 8 行星星图标不正确的一个案例", EMDLevel: 2, class: "D" },
+			{ text: "指出了成就 302 “价态”未在统计明细中提到", EMDLevel: 3, class: "D" },
+			{ text: "指出了成就 819 “独角兽之力”公式不正确", EMDLevel: 8, class: "D" }
+		],
+		"Game Changer": [
+			{ text: "建议使用基于先前获取而非当前数量的重置自动装置设置", EMDLevel: 5, class: "B" },
+			{ text: "建议了有效暗星文本的澄清", EMDLevel: 5, class: "C" },
+			{ text: "建议研究 17-8 使时间研究显示未改变的效果", EMDLevel: 8, class: "E" }
+		]
+	},
+	"FreeLancer": {
+		"Disinsection Crew": [
+			{ text: "识别出购买任何研究都会授予秘密研究成就", EMDLevel: 5, class: "C/D" }
+		],
+		"Exowriter": [
+			{ text: "识别出星尘故事条目显示产生了 0 星尘", EMDLevel: 2, class: "D" }
+		]
+	},
+	"Fusilliban": {
+		"Disinsection Crew": [
+			{ text: "识别出破坏游戏的无限星系 Bug", EMDLevel: 7, class: "A/B" }
+		],
+		"Game Changer": [
+			{ text: "建议了研究储蓄信息", EMDLevel: 8, class: "B" },
+			{ text: "建议了成就 815 “幻想乡千年”奖励（与 " + person("sandwich8") + " 共享）", EMDLevel: 8, class: "B/C" }
+		]
+	},
+	// G
+	"Gorn21": {
+		"Stylist": [
+			{ text: "建议了多个色素颜色更改中的一个", EMDLevel: 6, class: "C" }
+		]
+	},
+	// H
+	"Hedrauta": {
+		"Scripter": [
+			{ text: "在 alemaninc 不在时修复了多个严重 Bug", EMDLevel: 1, class: "A" },
+			{ text: "添加了工程计数法", EMDLevel: 1, class: "B" }
+		]
+	},
+	"hello.": {
+		"Disinsection Crew": [
+			{ text: "识别出打开特定标签页（本例中为‘隐藏统计’）导致游戏崩溃的一个案例", EMDLevel: 1, class: "D" }
+		]
+	},
+	"HollowX913": {
+		"Disinsection Crew": [
+			{ text: "识别出如果“研究后重置研究”关闭则研究无法完成", EMDLevel: 5, class: "C" }
+		]
+	},
+	"Hori": {
+		"Disinsection Crew": [
+			{ text: "识别出研究无法进入", EMDLevel: 5, class: "C" },
+			{ text: "指出了 alemaninc 导致研究不可见的问题（与 " + person("badzad31(Davin)") + ", " + person("Dragonus") + " 和 " + person("Titus") + " 共享）", EMDLevel: 5, class: "D" }
+		]
+	},
+	"Hyggyldy": {
+		"Game Changer": [
+			{ text: "建议了分配精通的确认弹窗", EMDLevel: 1, class: "C" }
+		]
+	},
+	// I
+	"IKA": {
+		"Game Changer": [
+			{ text: "建议了进度条上的成就无法失败", EMDLevel: 1, class: "A/B" }
+		]
+	},
+	"imhoden": {
+		"Disinsection Crew": [
+			{ text: "识别出即使在 " + person("WhattayaBrian") + " 报告后，研究 V 仍无法中止", EMDLevel: 6, class: "C" }
+		],
+		"Exowriter": [
+			{ text: "指出了“中止研究”在达到目标时没有变为“完成研究”", EMDLevel: 5, class: "D" }
+		]
+	},
+	"InfoHazard": {
+		"Disinsection Crew": [
+			{ text: "识别出研究配置方案无法正常工作的一个案例（此特定案例与 " + person("lexicalpedant") + " 共享）", EMDLevel: 5, class: "C/D" },
+			{ text: "识别出科学计数法在 " + person("Celestial of Blob / hyperbolia") + " 报告后依然无效", EMDLevel: 5, class: "C" }
+		]
+	},
+	"Ingibergur": {
+		"Disinsection Crew": [
+			{ text: "识别出成就 526 “大挤压”在购买单个暗轴时未被授予", EMDLevel: 5, class: "B" }
+		]
+	},
+	"iota": {
+		"Disinsection Crew": [
+			{ text: "识别出如果获得成就 520 “评级”时总第 5 层成就少于 9 个，游戏会崩溃", EMDLevel: 5, class: "B" }
+		]
+	},
+	// J
+	"jklw10": {
+		"Disinsection Crew": [
+			{ text: "识别出星星分配器总是按数字顺序购买，无视配置", EMDLevel: 5, class: "B" },
+			{ text: "识别出星尘自动装置在关闭时将自己设为无效设置（与 " + person("themadvirus613tmv") + " 共享）", EMDLevel: 5, class: "C/D" },
+			{ text: "识别出导入到配置方案的研究构建计入名称的 40 字符限制", EMDLevel: 5, class: "C/D" }
+		]
+	},
+	"johannarsakeio": {
+		"Disinsection Crew": [
+			{ text: "识别出星星 42 未显示其乘数", EMDLevel: 2, class: "C/D" },
+			{ text: "识别出研究 15-9 在鼠标悬停时崩溃游戏", EMDLevel: 7, class: "C" }
+		]
+	},
+	// K
+	"kastark": {
+		"Technician": [
+			{ text: "制作了 <a href=\"https://kastark.co.uk/articles/incrementals.html\">教程</a>，alemaninc 用它入门", EMDLevel: 1, class: "A" }
+		]
+	},
+	"Kaffe-work / IRAD": {
+		"Game Changer": [
+			{ text: "建议了苦行研究的批量购买", EMDLevel: 8, class: "A/B" }
+		],
+		"Scripter": [
+			{ text: "在更新日志中添加了一个逗号", EMDLevel: 1, class: "E" }
+		],
+		"Village Elder": [
+			{ text: "命名了矩阵", EMDLevel: 10, class: "A" }
+		]
+	},
+	"Kyle Wand": {
+		"Game Changer": [
+			{ text: "建议了不重置研究的中止研究", EMDLevel: 5, class: "B" }
+		]
+	},
+	"kumamushi": {
+		"Disinsection Crew": [
+			{ text: "暗星批量购买在游戏加载时被禁用", EMDLevel: 3, class: "C" },
+			{ text: "识别出多个研究配置方案无法正常工作的案例", EMDLevel: 5, class: "B/C" },
+			{ text: "多次报告了无响应的声望按钮", EMDLevel: 2, class: "D" }
+		],
+		"Exowriter": [
+			{ text: "指出了“Show Star/Mastery builds builds”的问题", EMDLevel: 2, class: "D" }
+		],
+		"Game Changer": [
+			{ text: "建议了记忆关闭游戏时打开的标签页", EMDLevel: 1, class: "B" },
+			{ text: "建议了单行幸运升级重置", EMDLevel: 8, class: "B" }
+		]
+	},
+	// L
+	"Lanie Carmelo": {
+		"Disinsection Crew": [
+			{ text: "指出了如果从未玩过游戏则无法打开的问题（与 " + person("reshrom") + " 和 " + person("FeynHS") + " 共享）", EMDLevel: 1, class: "C/D" }
+		],
+		"Game Changer": [
+			{ text: "建议了屏幕阅读器的无障碍功能", EMDLevel: 1, class: "B" }
+		]
+	},
+	"lexicalpedant": {
+		"Disinsection Crew": [
+			{ text: "识别出研究配置方案无法正常工作的一个案例（此特定案例与 " + person("InfoHazard") + " 共享）", EMDLevel: 5, class: "C/D" }
+		]
+	},
+	"Lulero": {
+		"Stylist": [
+			{ text: "多个第 5 层颜色更改之一", EMDLevel: 5, class: "D" }
+		]
+	},
+	// M
+	"Mark": {
+		"Disinsection Crew": [
+			{ text: "识别出暗星批量购买无效", EMDLevel: 3, class: "C" }
+		]
+	},
+	"MaxFrost": {
+		"Stylist": [
+			{ text: "建议了在所有标签页显示页脚", EMDLevel: 1, class: "A/B" }
+		]
+	},
+	"Mixelz": {
+		"Disinsection Crew": [
+			{ text: "协助让 alemaninc 意识到半个游戏基本上六个月都无法游玩。为什么 alemaninc 一开始就需要这个？", EMDLevel: 1, class: "A/B" }
+		]
+	},
+	"MundM2007": {
+		"Game Changer": [
+			{ text: "建议了在研究 I 中访问离线时间", EMDLevel: 5, class: "B" }
+		]
+	},
+	// N
+	"nicodium": {
+		"Disinsection Crew": [
+			{ text: "“玩法说明”的研究部分未显示任何内容", EMDLevel: 5, class: "D" }
+		],
+		"Exowriter": [
+			{ text: "建议在更新日志中添加逗号", EMDLevel: 1, class: "D" }
+		],
+		"Game Changer": [
+			{ text: "建议了不重置研究的研究完成", EMDLevel: 5, class: "B" }
+		]
+	},
+	"Northo": {
+		"Disinsection Crew": [
+			{ text: "识别出突然的、无法解释的 <code>NaN</code> 案例之一", EMDLevel: 1, class: "E" },
+			{ text: "协助识别了成就 505 “钢铁意志 IV”里程碑仅在购买单个暗轴时有效", EMDLevel: 5, class: "C" },
+			{ text: "协助识别了恰好在目标值时研究完成未注册的问题（与 " + person("Eris") + " 共享）", EMDLevel: 5, class: "C/D" }
+		],
+		"Game Changer": [
+			{ text: "建议了研究配置方案", EMDLevel: 5, class: "B" },
+			{ text: "建议了以前的声望最后 10 次（这也是需要保存分段器的原因）", EMDLevel: 2, class: "B" },
+			{ text: "建议了星尘和虫洞自动装置的转移（与 " + person("Tichat002") + " 共享）", EMDLevel: 5, class: "C/D" }
+		],
+		"Stylist": [
+			{ text: "建议了折叠已完成的成就层级", EMDLevel: 1, class: "B" }
+		]
+	},
+	// O
+	"Orrery": {
+		"Disinsection Crew": [
+			{ text: "识别出有限棱镜升级实际上并未受限（与 " + person("Celestial of Blob / hyperbolia") + " 共享）", EMDLevel: 8, class: "B" }
+		]
+	},
+	// P
+	"Pickle Rick Sanchez": {
+		"Disinsection Crew": [
+			{ text: "识别出 alemaninc 序数表示法无效", EMDLevel: 1, class: "C" },
+			{ text: "识别出暗星批量购买无法关闭", EMDLevel: 3, class: "C" }
+		]
+	},
+	"Prophetic Eclipse": {
+		"Game Changer": [
+			{ text: "间接建议了虫洞里程碑 6", EMDLevel: 5, class: "C" }
+		]
+	},
+	// Q
+	// R
+	"reshrom": {
+		"Disinsection Crew": [
+			{ text: "指出了如果从未玩过游戏则无法打开的问题（与 " + person("FeynHS") + " 和 " + person("Lanie Carmelo") + " 共享）", EMDLevel: 1, class: "C/D" }
+		]
+	},
+	"ResidualToast": {
+		"Disinsection Crew": [
+			{ text: "识别出研究的视觉异常", EMDLevel: 5, class: "C/D" }
+		],
+		"Game Changer": [
+			{ text: "间接建议了成就 817 “知晓的存在”奖励", EMDLevel: 8, class: "B" }
+		],
+		"Stylist": [
+			{ text: "建议了多个第 5 层颜色更改中的一个", EMDLevel: 5, class: "C" },
+			{ text: "建议了多个色素颜色更改中的一个", EMDLevel: 6, class: "C" }
+		]
+	},
+	"richlycn013": {
+		"Disinsection Crew": [
+			{ text: "描述了成就 524 “精通并非微不足道的怪物”的问题", EMDLevel: 5, class: "C" }
+		]
+	},
+	// S
+	"sandwich8": {
+		"Game Changer": [
+			{ text: "间接建议了成就 815 “幻想乡千年”奖励（与 " + person("Fusilliban") + " 共享）", EMDLevel: 8, class: "B/C" }
+		]
+	},
+	"sese müller": {
+		"Disinsection Crew": [
+			{ text: "指出了虫洞自动装置破坏游戏的问题，即使在 " + person("Alien714") + " 报告后 alemaninc 表面上修复了它", EMDLevel: 5, class: "C" }
+		]
+	},
+	"Shinwmyste": {
+		"Disinsection Crew": [
+			{ text: "星星分配器无效", EMDLevel: 5, class: "C" }
+		]
+	},
+	"sino": {
+		"Disinsection Crew": [
+			{ text: "最近解锁的虫洞里程碑未显示" }
+		]
+	},
+	"Spacekiwi_": {
+		"Disinsection Crew": [
+			{ text: "识别出“取消第 <i>X</i> 行精通”无效（与 " + person("Tom") + " 共享）", EMDLevel: 1, class: "C/D" }
+		]
+	},
+	"Spiral": {
+		"Disinsection Crew": [
+			{ text: "识别出研究配置方案购买错误研究的一个案例", EMDLevel: 5, class: "D" }
+		]
+	},
+	"Stat Mark": {
+		"Special": [
+			{ text: "命名了该项目", EMDLevel: 1, class: "S" }
+		],
+		"Game Changer": [
+			{ text: "命名了虫洞", EMDLevel: 5, class: "A" },
+			{ text: "建议了普通 T 轴效果", EMDLevel: 2, class: "B" }
+		]
+	},
+	"Steiny": {
+		"Disinsection Crew": [
+			{ text: "识别出多个与研究 V 相关的问题", EMDLevel: 6, class: "B/C" },
+			{ text: "识别出多个 <code>NaN</code> 星系的案例", EMDLevel: 7, class: "B/C" },
+			{ text: "识别出存档加载未重置光素效果（以及许多其他东西）", EMDLevel: 6, class: "C" }
+		]
+	},
+	"st0ck53y": {
+		"Scripter": [
+			{ text: "揭示了成就 801 是有害的。<br>（拉取请求从未被接受，因为 alemaninc 不得不更改奖励。）", EMDLevel: 7, class: "A" }
+		]
+	},
+	// T
+	"Tarin": {
+		"Game Changer": [
+			{ text: "建议了在“钢铁意志”激活时的特殊虫洞重置确认", EMDLevel: 5, class: "B/C" },
+			{ text: "建议了“Tardis”隐藏成就", EMDLevel: 1, class: "D" }
+		]
+	},
+	"themadvirus613tmv": {
+		"Disinsection Crew": [
+			{ text: "识别出星尘自动装置在关闭时将自己设为无效设置（与 " + person("jklw10") + " 共享）", EMDLevel: 5, class: "C/D" },
+			{ text: "识别出如果尚未进行声望，最佳声望事件显示默认值", EMDLevel: 2, class: "D" }
+		]
+	},
+	"The Platinum Possum": {
+		"Disinsection Crew": [
+			{ text: "暗星自动购买器崩溃游戏", EMDLevel: 3, class: "C" }
+		]
+	},
+	"Tichat002": {
+		"Game Changer": [
+			{ text: "建议了统计中的声望资源总量", EMDLevel: 2, class: "B" },
+			{ text: "建议了贪婪的研究批量购买", EMDLevel: 5, class: "A/B" },
+			{ text: "建议了星尘和虫洞自动装置的转移（与 " + person("Northo") + " 共享）", EMDLevel: 5, class: "C/D" }
+		],
+		"Stylist": [
+			{ text: "建议了每个暗 U 轴的总乘数显示", EMDLevel: 3, class: "D" },
+			{ text: "建议了多个第 5 层颜色更改中的一个", EMDLevel: 5, class: "C" }
+		]
+	},
+	"Titus": {
+		"Disinsection Crew": [
+			{ text: "指出了 alemaninc 导致研究不可见的问题（与 " + person("badzad31(Davin)") + ", " + person("Dragonus") + " 和 " + person("Hori") + " 共享）", EMDLevel: 5, class: "D" },
+			{ text: "指出了发现值文本总是显示没有花费任何发现值", EMDLevel: 5, class: "C/D" }
+		]
+	},
+	"Tom": {
+		"Disinsection Crew": [
+			{ text: "识别出多个 <code>NaN</code> 星系的案例", EMDLevel: 7, class: "B/C" },
+			{ text: "识别出 时间速度覆盖了色素获取而非乘以它", EMDLevel: 6, class: "B/C" },
+			{ text: "识别出即使未解锁，如果拥有研究 11-8，光线色素也会出现", EMDLevel: 6, class: "C" },
+			{ text: "识别出“取消第 <i>X</i> 行精通”无效（与 " + person("Spacekiwi_") + " 共享）", EMDLevel: 1, class: "C/D" },
+			{ text: "新闻条目 #242 链接不正确", EMDLevel: 1, class: "D/E" }
+		]
+	},
+	// U
+	// V
+	"Vexed": {
+		"Stylist": [
+			{ text: "建议了多个第 5 层颜色更改中的一个", EMDLevel: 5, class: "C" }
+		]
+	},
+	// W
+	"Wexiity": {
+		"Stylist": [
+			{ text: "建议了星星总量的显示", EMDLevel: 5, class: "B" }
+		]
+	},
+	"WhattayaBrian": {
+		"Disinsection Crew": [
+			{ text: "识别出某些研究在可购买时未亮起", EMDLevel: 5, class: "C" },
+			{ text: "识别出研究 V 无法中止", EMDLevel: 6, class: "C" },
+			{ text: "多次报告了无响应的声望按钮", EMDLevel: 2, class: "D" }
+		],
+		"Stylist": [
+			{ text: "建议了黄光素的“查看所有效果”", EMDLevel: 6, class: "B" }
+		]
+	},
+	"Wong TingHo": {
+		"Disinsection Crew": [
+			{ text: "识别出低于 " + format("2^-53") + " 的星尘指数行为如同 0，无视真实值", EMDLevel: 5, class: "C" }
+		],
+		"Exowriter": [
+			{ text: "建议 " + person("Kaffe-work / IRAD") + " 在更新日志中添加逗号", EMDLevel: 1, class: "E" }
+		],
+		"Stylist": [
+			{ text: "建议白色/黑色/灰色色素具有略微不同的颜色", EMDLevel: 6, class: "B" }
+		]
+	},
+	// X
+	"xhwzwka": {
+		"Journalist": [
+			{ text: "写了新闻条目 #267（后来不得不修正“已格式化”的部分，尽管它实际上并没有）", EMDLevel: 1, class: "D" }
+		],
+		"Special": [
+			{ text: "制作了 alemaninc 使用的 JavaScript 教程", EMDLevel: 1, class: "S" },
+			{ text: "告知 alemaninc <i>GitHub Pages</i> 是存在的东西", EMDLevel: 1, class: "S" }
+		],
+		"Stylist": [
+			{ text: "建议了现代星星 UI", EMDLevel: 2, class: "B" },
+			{ text: "指出了一些研究图标颜色不正确", EMDLevel: 5, class: "D" }
+		]
+	}
+	// Y
+	// Z
+}
+
+function popup(data) {
+	d.display("div_fancyPopupScreen", "inline-block")
+	d.innerHTML("span_fancyPopupText", data.text)
+	if (data.input !== undefined)
+		d.element("span_fancyPopupText").innerHTML += "<br><textarea id=\"span_fancyPopupInput\" style=\"width:90%;height:40%\">" + data.input + "</textarea>"
+	d.innerHTML("span_fancyPopupButtons", "")
+	for (let i of (data.buttons ?? [["Close", ""]]))
+		d.element("span_fancyPopupButtons").innerHTML += "<button onClick=\"d.display('div_fancyPopupScreen','none');" + i[1] + "\" class=\"genericbutton size3\">" + i[0] + "</button>"
+}
+
+function personClass(name) {
+	return (specialGrade[name] === undefined)
+		? overallClass(Object.values(contributions[name]).map(x => x.map(y => y.class)).flat())
+		: specialGrade[name].class
+}
+
+function showContributions(name) {
+	let out = "", counter = 1
+	for (let i of Object.keys(categories)) {
+		if (contributions[name][i] !== undefined) {
+			out += "<h4 style=\"color:" + i.color + ";\">" + i + "</h4><table>"
+			for (let j of contributions[name][i]) {
+				out += "<tr><td style=\"width:25px;padding-right:10px;text-align:right;color:" + i.color + ";\">" + counter + "</td><td style=\"width:calc(60vw - 36px);text-align:left;color:" + i.color + ";\">" +
+					((j.EMDLevel > EMDLevel) ? ("<i>达到 EMD 等级 " + j.EMDLevel + " 以揭示此内容</i>") : j.text) +
+					"<span style=\"float:right;\">[等级 " + j.class.replace("+", "<sup>+</sup>").replace("-", "<sup>-</sup>") + "]</span></td></tr>"
+				counter++
+			}
+			out += "</table>"
+		}
+	}
+	popup({
+		text: "<h3 style=\"color:" + (contributorColor(name) ?? "inherit") + ";\">" + name + " 的贡献 <span style=\"float:right;\">[总体等级 " + personClass(name).replace("+", "<sup>+</sup>").replace("-", "<sup>-</sup>") + "]</span></h3><hr>" + out,
+		buttons: [["Close", ""]]
+	})
+}
+
+function contributorSort(a, b) {
+	return ((Object.keys(specialGrade).includes(b) ? 1 : 0) - (Object.keys(specialGrade).includes(a) ? 1 : 0)) || (a.toLowerCase() > b.toLowerCase())
+}
+
+function switchTab(name) {
+	let names = (name === "All")
+		? Object.keys(contributions).sort(contributorSort)
+		: (name === "Special")
+			? Object.keys(specialGrade)
+			: Object.keys(contributions)
+				.map(x => [x, (contributions[x][name] === undefined) ? "F" : overallClass(contributions[x][name].map(x => x.class))])
+				.filter(x => x[1] !== "F")
+				.map(x => x[0])
+				.sort(contributorSort)
+
+	d.innerHTML("credits", ((name === "All") ? "致所有帮助让 <i>奇异物质维度</i> 成为更好游戏的人。" : categories[name]) +
+		"<br><br>" +
+		names.map(x => "<div style=\"height:30px;width:300px;display:inline-block;color:" + contributorColor(x) + ";\" onClick=\"showContributions('" + x + "')\">" + x + "</div>").join(""))
+
+	for (let i of ["All", ...Object.keys(categories)]) {
+		d.element("navigation_" + i).style.opacity = "0.6"
+	}
+	d.element("navigation_" + name).style.opacity = "1"
+}
+
+function generateHTML() {
+	document.getElementById("navigation").innerHTML = ["All", ...Object.keys(categories)]
+		.map(x => "<button id=\"navigation_" + x + "\" class=\"navigation\" style=\"width:calc(" + (100 / (Object.keys(categories).length + 1)) + "vw - 3px);\" onClick=\"switchTab('" + x + "');\">" + x + "</button>")
+		.join("")
+	switchTab("All")
+}
+
+generateHTML()
+	</script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+	<link rel="stylesheet" type="text/css" href="globalstyle.css" />
+	<link rel="stylesheet" type="text/css" href="interface.css" />
+	<meta charset="utf-8"/>
+	<title>奇异物质维度</title>
+</head>
+<body onClick="gameClick()">
+
+	<div id="game" class="topleveldiv" style="display:none;padding-bottom:44px">
+
+		<!-- 新闻滚动条 -->
+		<div id="newsticker" style="display:inline-block;">
+			<span id="newsline"></span>
+		</div>
+
+		<!-- 顶部资源栏 -->
+		<table>
+			<tr>
+				<td class="toptable" id="resourceModal" style="width:calc(100vw - 280px)"></td>
+				<td class="toptable" style="width:260px">
+					<table>
+						<tr>
+							<td>
+								<button onClick="attemptStardustReset(true)" id="button_stardustReset">
+									重置以获得 <span class="big _stardust" id="span_pendingstardust"></span> 星尘<br>
+									<span class="small" id="span_stardustExoticMatterReq"></span>
+								</button>
+							</td>
+							<td>
+								<button onClick="attemptWormholeReset(true)" id="button_wormholeReset">
+									<span id="span_wormholeResetButtonHRText">
+										重置以获得 <span id="span_wormholeResetButtonPendingHR" class="big _wormhole"></span> 霍金辐射
+									</span>
+									<span id="span_wormholeResetButtonStudyText">
+										完成研究 <span id="wormholeResetButtonActiveStudy"></span>
+									</span>
+									<span id="span_wormholeResetButtonReqText" class="small"></span>
+								</button>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+
+		<!-- 一级导航 -->
+		<div class="navigation globalnavigation">
+			<button id="button_bigtab_main" onClick="openTab('main')" class="bigtab">主界面</button>
+			<button id="button_bigtab_stardust" onClick="openTab('stardust')" class="bigtab" style="display:none;filter:brightness(60%)">星尘</button>
+			<button id="button_bigtab_wormhole" onClick="openTab('wormhole')" class="bigtab" style="display:none;filter:brightness(60%)">虫洞</button>
+			<button id="button_bigtab_achievements" onClick="openTab('achievements')" class="bigtab" style="filter:brightness(60%)">成就</button>
+			<button id="button_bigtab_automation" onClick="openTab('automation')" class="bigtab" style="display:none;filter:brightness(60%)">自动化</button>
+			<button id="button_bigtab_options" onClick="openTab('options')" class="bigtab" style="filter:brightness(60%)">选项</button>
+			<button id="button_bigtab_statistics" onClick="openTab('statistics')" class="bigtab" style="filter:brightness(60%)">统计</button>
+		</div>
+		<hr>
+
+		<!-- 主界面 -->
+		<div class="tab" id="bigtab_main">
+			<div class="mainNavigation globalnavigation">
+				<button class="tabtier2 tier2main" onClick="openSubTab('main','axis')" id="button_subtab_main_axis">轴</button>
+				<button class="tabtier2 tier2main" onClick="openSubTab('main','masteries')" style="display:none;filter:brightness(60%)" id="button_subtab_main_masteries">精通</button>
+				<button class="tabtier2 tier2main" onClick="openSubTab('main','offlineTime')" style="filter:brightness(60%)" id="button_subtab_main_offlineTime">离线时间</button>
+				<button class="tabtier2 tier2main" onClick="openSubTab('main','corruption')" style="filter:brightness(60%)" id="button_subtab_main_corruption">腐化</button>
+			</div>
+
+			<div class="subtab main" id="subtab_main_axis">
+				<button class="featureConfig main" onClick="openConfig['Axis']()"></button>
+				<p id="div_exoticmatter_disabledTop">
+					你有 <span id="span_exoticmatter_disabledTop" class="big _exoticmatter"></span> 奇异物质<br>
+					你每秒获得 <span id="span_exoticmatterPerSec_disabledTop" class="big _exoticmatter"></span> 奇异物质
+				</p><br>
+				<button id="button_maxAxis" class="maxaxisbutton" onClick="buyMaxAxis(Array(12).fill('u'),true)">
+					最大购买轴（<span id="span_affordableAxis"></span>）
+				</button><br>
+				<div id="div_normalAxisContainer" style="width:900px"></div><br>
+			</div>
+
+			<div class="subtab main" id="subtab_main_masteries" style="display:none">
+				<button class="featureConfig main" onClick="openConfig['Mastery']()"></button>
+				<p>
+					<span id="div_masteryPower_disabledTop">
+						你有 <span class="big _mastery" id="span_masteryPower_disabledTop"></span> 精通力。<br>
+						你每秒获得 <span class="big _mastery" id="span_masteryPowerPerSec_disabledTop"></span> 精通力（基于奇异物质和自上次取消精通以来的时间）
+					</span><br id="br_masteryPower_disabledTop">
+					你可以从每行激活 1 个精通。取消精通将重置你的精通力。
+				</p>
+				<button class="genericbutton size2" onClick="for (let i=1;i<=totalMasteryRows;i++) {unassignMasteryRow(i)}">
+					取消分配所有精通（这将重置精通力）
+				</button>
+				<div id="masteryContainerLegacy"></div>
+				<div id="masteryContainerModern"></div><br>
+				<div id="masteryInfo" class="tooltip" style="visibility:hidden;"></div>
+			</div>
+
+			<div class="subtab main" id="subtab_main_offlineTime" style="display:none">
+				<button class="featureConfig main" onClick="openConfig['Offline Time']()"></button>
+				<p>
+					你有 <span id="span_dilatedTime" class="big _time"></span> 扩张时间。<br>
+					离线或时间冻结时，每秒获得 1 秒扩张时间。
+				</p>
+				<div class="dilationDiv">
+					<h1>超频</h1>
+					<input type="range" id="dilationSpeedupFactor" min="1" max="4" step="0.001"
+						oninput="g.dilationPower=Number(d.element('dilationSpeedupFactor').value)"
+						style="width:350px">
+					<p>
+						启用时，超频提供 <span id="span_overclockSpeedupFactor" class="big _time"></span>× 时间加速，
+						代价为每秒 <span id="span_overclockCost"></span> 秒扩张时间。
+					</p>
+					<p id="span_overclockCostScaling" class="big _time2"></p>
+					<div id="overclockFooter">
+						<button class="overclockOption" id="button_overclockActive" onClick="setTimeState(1)"></button>
+						<button class="overclockOption" id="button_overclockToSoftcap" onClick="overclockToSoftcap();updateOverclockScrollbar()">
+							将超频设为软上限起点
+						</button>
+						<button class="overclockOption" id="button_freezeGame" onClick="setTimeState(2)"></button>
+						<button class="overclockOption" id="button_equalizeTime" onClick="setTimeState(3)"></button>
+					</div>
+				</div>
+				<div id="div_dilationUpgrades" class="dilationDiv"></div>
+				<div id="div_timeLoop" class="dilationDiv">
+					<h1>时间循环</h1>
+					<input type="range" id="wormholeAmplification" min="0" max="6" value="0" step="0.001" style="width:350px">
+					<p>
+						下次虫洞重置将给予 <span id="span_wormholeAmplificationMult" class="big _time"></span>× 更多奖励，
+						代价为 <span id="span_wormholeAmplificationCost" class="big _time"></span> 秒扩张时间
+					</p>
+				</div>
+			</div>
+
+			<div class="subtab main" id="subtab_main_corruption" style="display:none"></div>
+		</div>
+
+		<!-- 星尘界面 -->
+		<div class="tab" id="bigtab_stardust" style="display:none">
+			<p id="div_stardust_disabledTop">
+				你有 <span id="span_stardust_disabledTop" class="big _stardust"></span> 星尘
+			</p><br id="br_stardust_disabledTop">
+
+			<div class="stardustNavigation globalnavigation">
+				<button class="tabtier2 tier2stardust" onClick="openSubTab('stardust','stardustBoosts')" id="button_subtab_stardust_stardustBoosts">星尘加成</button>
+				<button class="tabtier2 tier2stardust" onClick="openSubTab('stardust','stars')" id="button_subtab_stardust_stars" style="filter:brightness(60%)">星星</button>
+				<button class="tabtier2 tier2stardust" onClick="openSubTab('stardust','darkMatter')" id="button_subtab_stardust_darkMatter" style="display:none;filter:brightness(60%)">暗物质</button>
+				<button class="tabtier2 tier2stardust" onClick="openSubTab('stardust','energy')" id="button_subtab_stardust_energy" style="display:none;filter:brightness(60%)">能量</button>
+			</div>
+
+			<div class="subtab stardust" id="subtab_stardust_stardustBoosts">
+				<button class="featureConfig stardust" onClick="openConfig['Stardust Boost']()"></button>
+				<div id="div_stardustBoostContainer"></div><br>
+				<div id="div_stardustUpgradeContainer"></div><br>
+				<button class="starbuybutton" onClick="stardustReset()">无奖励重置（卡关时可能有用）</button>
+			</div>
+
+			<div class="subtab stardust" id="subtab_stardust_stars" style="display:none">
+				<button class="featureConfig stardust" onClick="openConfig['Star']()"></button>
+				<div><table id="starContainerLegacy"></table><table id="starContainerModern"></table></div>
+				<div id="starInfo" class="tooltip" style="visibility:hidden;"></div>
+				<div style="width:420px">
+					你有 <span id="span_unspentStars" class="big _stars"></span> 星星。<br>
+					<span id="span_nextStarRow"></span>
+					<button class="starbuybutton" onClick="buyStar(true)">
+						购买星星<br>费用：<span id="span_starCost"></span> 星尘
+					</button>
+					<button class="starbuybutton" onClick="respecStars(true)">重置星星（强制星尘重置）</button>
+					<button class="starbuybutton" onClick="importStars()">导入星星配置</button>
+					<button class="starbuybutton" onClick="exportStars()">导出星星配置</button>
+					<button class="starbuybutton" onClick="maxFullStarRows()" id="button_maxFullStarRows">
+						填满所有可用星星的行
+					</button>
+				</div>
+			</div>
+
+			<div class="subtab stardust" id="subtab_stardust_darkMatter" style="display:none">
+				<button class="featureConfig stardust" onClick="openConfig['Dark Matter']()"></button>
+				<div id="div_darkMatterUnlocked">
+					<p>
+						<span id="div_darkmatter_disabledTop">
+							你有 <span class="big _darkmatter" id="span_darkmatter_disabledTop"></span> 暗物质<br>
+							你每秒获得 <span class="big _darkmatter" id="span_darkmatterPerSec_disabledTop"></span> 暗物质
+						</span><br id="br_darkmatter_disabledTop">
+						暗物质获取乘以 <span class="big _darkmatter" id="span_baseDarkMatterGain"></span>（基于星尘）<br>
+						每拥有 <span class="big _darkmatter" id="span_darkMatterFreeAxis1"></span> 暗轴，
+						免费获得 <span class="big _darkmatter" id="span_darkMatterFreeAxis2"></span> 对应普通轴
+					</p>
+					<table>
+						<tr>
+							<td style="vertical-align:top;width:900px;">
+								<button id="button_maxDarkAxis" class="maxaxisbutton" onClick="buyMaxDarkAxis(Array(12).fill('u'))">
+									最大购买暗轴（<span id="span_affordableDarkAxis"></span>）
+								</button><br>
+								<div id="div_darkAxisContainer"></div>
+							</td>
+							<td style="vertical-align:top;width:450px;">
+								<div id="div_darkstars">
+									你有 <span class="big _darkmatter" id="span_darkstars"></span> 暗星<br>
+									<button id="button_darkstar" onClick="gainDarkStar('u',true)">
+										<div id="span_realDarkStars" style="position:absolute;font-size:8px;top:6px;right:6px;text-align:right;color:rgba(0,0,0,0.4);"></div>
+										<div id="span_darkStarMainText"></div>
+									</button>
+								</div>
+								<div id="div_titaniumEmpowerments">
+									你有 <span class="big _titanium" id="span_titaniumEmpowerments"></span> 钛强化<br>
+									你有 <span class="big _titanium" id="span_fortitude"></span> 坚韧，转化为每秒
+									<span class="big _titanium" id="span_fortitudeEffect"></span> 暗物质<br>
+									你的坚韧上限为 <span id="span_maxFortitude"></span>，每秒最多获得
+									<span id="span_maxFortitudeGain"></span>（接近上限时减少）<br>
+									<button id="button_titaniumEmpowerment" onClick="studies[12].empowerment.gain()">
+										<div id="span_realDarkStars" style="position:absolute;font-size:8px;top:6px;right:6px;text-align:right;color:rgba(0,0,0,0.4);"></div>
+										<div id="span_darkStarMainText"></div>
+									</button>
+								</div>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div id="div_darkMatterLocked">你必须购买相应的星尘升级才能生成暗物质</div>
+			</div>
+
+			<div class="subtab stardust" id="subtab_stardust_energy" style="display:none">
+				<div id="energyContainer"></div>
+				<div id="div_energyLocked">你必须购买相应的星尘升级才能生成能量</div>
+			</div>
+		</div>
+
+		<!-- 虫洞界面 -->
+		<div class="tab" id="bigtab_wormhole" style="display:none">
+			<p id="div_hr_disabledTop">
+				你有 <span id="span_hr_disabledTop" class="big _wormhole"></span> 霍金辐射
+			</p><br id="br_hr_disabledTop">
+
+			<div class="wormholeNavigation globalnavigation">
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','research');updateResearchTree()" id="button_subtab_wormhole_research">研究</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','studies')" id="button_subtab_wormhole_studies" style="display:none;filter:brightness(60%)">研究（Studies）</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','light')" id="button_subtab_wormhole_light" style="display:none;filter:brightness(60%)">光</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','galaxies')" id="button_subtab_wormhole_galaxies" style="display:none;filter:brightness(60%)">星系</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','luck')" id="button_subtab_wormhole_luck" style="display:none;filter:brightness(60%)">幸运</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','prismatic')" id="button_subtab_wormhole_prismatic" style="display:none;filter:brightness(60%)">棱镜</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','antimatter')" id="button_subtab_wormhole_antimatter" style="display:none;filter:brightness(60%)">反物质</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','wormholeUpgrades')" id="button_subtab_wormhole_wormholeUpgrades" style="display:none;filter:brightness(60%);font-size:11px;">虫洞升级</button>
+				<button class="tabtier2 tier2wormhole" onClick="openSubTab('wormhole','study13')" id="button_subtab_wormhole_study13" style="display:none;filter:brightness(60%);">研究 XIII</button>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_research">
+				<button class="featureConfig wormhole" onClick="openConfig['Research']()"></button>
+				<div id="researchContainer" style="width:1140px;overflow:auto;padding-bottom:240px;position:relative">
+					<canvas style="position:absolute;top:0px;left:15px;z-index:1" id="researchCanvas" width="1110"></canvas>
+					<div style="position:absolute;top:0px;left:15px;z-index:2"><table id="researchTable"></table></div>
+				</div>
+				<div id="discoveryPanel" class="panel">
+					<p style="column-count:2">
+						你有 <span id="span_knowledge" class="big _research"></span> 知识，
+						给予所有精通 <span id="span_knowledgeEffect" class="big _research"></span>% 加成。<br>
+						你每秒获得 <span id="span_knowledgePerSec" class="big _research"></span> 知识（基于精通力和观测）<br>
+						你有 <span id="span_discoveryDisplay" class="big _research"></span> 发现值
+						<button id="button_projectedResearchCost" class="information" style="border-color:var(--research);color:var(--research)" onClick="projectedResearchCost()">i</button><br>
+						下一个在 <span id="span_discoveryKnowledgeReq" class="big _research"></span> 知识
+					</p>
+					<button class="observation" id="button_observation0" onClick="buyMaxObservations(0)">
+						观测奇异物质<br>（需要 <span id="span_observeCost0"></span> 奇异物质）
+					</button>
+					<button class="observation" id="button_observation1" onClick="buyMaxObservations(1)">
+						观测星云<br>（需要 <span id="span_observeCost1"></span> 星尘）
+					</button>
+					<button class="observation" id="button_observation2" onClick="buyMaxObservations(2)">
+						观测暗物质<br>（需要 <span id="span_observeCost2"></span> 暗物质）
+					</button>
+					<button class="observation" id="button_observation3" onClick="buyMaxObservations(3)">
+						观测黑洞<br>（需要 <span id="span_observeCost3"></span> 霍金辐射）
+					</button>
+					<button class="observation" onClick="for (let i=0;i<4;i++) buyMaxObservations(i)">最大化所有观测</button><br>
+					<button class="observation" id="button_researchRespec" onClick="toggle('researchRespec')">下次虫洞重置时重置研究</button>
+					<button class="observation" id="button_forceWormhole" onClick="wormholeReset('force')">强制虫洞重置</button>
+					<button class="observation" id="button_buyMaxResearch" onClick="toggle('buyMaxResearch')">购买研究时同时购买前置研究</button>
+					<button class="observation" onClick="researchLoadouts.open()">显示研究配置方案</button>
+					<button class="observation" onClick="importResearch()">导入研究</button>
+					<button class="observation" onClick="exportResearch()">导出研究</button>
+				</div>
+				<div id="researchInfo" class="tooltip" style="visibility:none;"></div>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_studies" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Study']()"></button>
+				<div id="studyContainerCompact"></div>
+				<div id="studyContainerDetailed"></div>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_light" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Light']()"></button>
+				<p>
+					你每秒生成 <span id="span_chromaPerSec" class="big _stars"></span> 色素。<br>
+					你有 <span id="span_unspentStarsLight" class="big _stars"></span> 星星，
+					允许你生成基础 <span id="span_baseChroma" class="big _stars"></span> 色素/秒
+					（每少 1 颗星星 ÷<span id="span_baseChromaPerStar" class="big _stars"></span>）<br>
+					<span id="span_chromaCostMultiplierDisplay">
+						色素费用乘数为 <span id="span_chromaCostMultiplier" class="big _stars"></span>。
+					</span>
+				</p>
+				<div id="lightContainer1"></div><br>
+				<div id="lightContainer2"></div><br>
+				<div id="lightContainer3"></div>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_galaxies" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Galaxy']()"></button>
+				<p>
+					你有 <span class="big _galaxies" id="span_galaxies"></span> 个星系。你曾经拥有过的最高数量是
+					<span class="big _galaxies" id="span_highestGalaxies"></span>。<br>
+					第 <span id="span_galaxyFinalStarOrdinal"></span> 颗星星目前花费
+					<span class="big _galaxies" id="span_currentGalaxyStarCost"></span> 星尘，
+					下一个星系将花费 <span class="big _galaxies" id="span_nextGalaxyStarCost"></span>。<br>
+					以你当前的星尘量，你可以负担 <span class="big _galaxies" id="span_currentGalaxyAffordableStars"></span> 颗星星，
+					下一个星系将能负担 <span class="big _galaxies" id="span_nextGalaxyAffordableStars"></span> 颗。<br>
+					获得或失去星系会强制虫洞重置。
+				</p>
+				<button onClick="gainGalaxy()" id="button_gainGalaxy">
+					创造一个星系（需要 <span id="span_galaxyStarRequirement"></span> 颗星星）
+				</button>
+				<button onClick="loseGalaxy()" id="button_destroyGalaxies">摧毁一个星系</button><br>
+				<div id="div_galaxyEffects">
+					<h4 style="text-decoration:underline;color:rgba(255,255,0,0.9);">星系效果</h4>
+					<table id="table_galaxyEffects"></table>
+					<p id="span_galaxyEffectTooltip"></p>
+				</div>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_luck" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Luck']()"></button>
+				<p>
+					你有 <span class="big _luck" id="span_luckShards"></span> 幸运碎片。<br>
+					你每秒生成 <span class="big _luck" id="span_luckShardsPerSec"></span> 幸运碎片。<br>
+					你的幸运碎片给予你 <span class="big _luck" id="span_luckShardEff1"></span> 免费暗 Y 轴，
+					并将奇异和暗轴超折算减慢 <span class="big _luck" id="span_luckShardEff2"></span>
+					<span id="span_luckShardEff2Sign"></span>
+				</p>
+				<table id="table_luckUpgrades"></table>
+				<div style="float:right;text-align:right;margin-right:20px;" id="div_luckSpendOptions"></div>
+				<button style="float:right" onClick="respecLuckUpgrades()" class="genericbutton size2" id="button_respecLuckUpgrades">
+					重置幸运升级（强制虫洞重置）
+				</button>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_prismatic" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Prismatic']()"></button>
+				<p>
+					你有 <span class="big _prismatic" id="span_prismatic"></span> 棱镜。<br>
+					你每秒生成 <span class="big _prismatic" id="span_prismaticPerSec"></span> 棱镜（基于总光素）。
+				</p>
+				<button id="button_maxPrismaticUpgrades" onClick="buyMaxPrismaticUpgrades()">
+					购买所有不可退款升级
+				</button><br>
+				<div id="div_prismaticUpgrades"></div><br><br>
+				<div id="div_refundablePrismaticUpgrades"></div><br>
+				<div style="float:right;text-align:right;margin-right:20px;" id="div_prismaticSpendOptions"></div>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_antimatter" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Antimatter']()"></button>
+				<p>
+					<span id="div_antimatter_disabledTop">
+						你有 <span class="big _antimatter" id="span_antimatter_disabledTop"></span> 反物质<br>
+						你每秒获得 <span class="big _antimatter" id="span_antimatterPerSec_disabledTop"></span> 反物质
+					</span><br id="br_antimatter_disabledTop">
+					每个购买的反轴会增加相应普通轴和暗轴的有效数量。
+				</p>
+				<table>
+					<tr>
+						<td style="width:900px;vertical-align:top;">
+							<button id="button_maxAntiAxis" class="maxaxisbutton" onClick="buyMaxAntiAxis(Array(12).fill('u'))">
+								最大购买反轴（<span id="span_affordableAntiAxis"></span>）
+							</button><br>
+							<div id="div_antiAxisContainer"></div>
+						</td>
+						<td style="width:450px;vertical-align:top;" id="td_antimatterGalaxies">
+							<div id="div_antimatterGalaxies">
+								你有 <span class="big _antimatter" id="span_antimatterGalaxies"></span> 反物质星系<br>
+								<button id="button_antimatterGalaxy" onClick="antimatterGalaxy.gain('u')">
+									<div id="span_realAntimatterGalaxies" style="position:absolute;font-size:8px;top:6px;right:6px;text-align:right;color:rgba(0,0,0,0.4);"></div>
+									<div id="span_antimatterGalaxyMainText"></div>
+								</button>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_wormholeUpgrades" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Wormhole Upgrades']()"></button>
+				<table id="wormholeUpgradeContainer" style="color:#ffffff;font-size:75%"></table>
+			</div>
+
+			<div class="subtab wormhole" id="subtab_wormhole_study13" style="display:none">
+				<button class="featureConfig wormhole" onClick="openConfig['Study XIII']()"></button>
+				<div class="studyDiv" id="div_study13" style="height:180px;width:1200px;">
+					<table>
+						<tr>
+							<td style="width:1080px;font-weight:700;">
+								<span style="font-size:18px;">研究 XIII</span><br>
+								<span id="span_study13Name" style="font-size:14px;"></span>
+							</td>
+							<td style="width:120px">
+								<button id="button_study13" class="startStudy" onClick="studyButtons.click(13)"></button>
+							</td>
+						</tr>
+					</table>
+					<table style="text-align:left">
+						<colgroup><col style="width:120px"><col style="width:1080px"></colgroup>
+						<tr><td style="vertical-align:top;padding-bottom:8px;">绑定：</td><td id="span_study13Binding" style="vertical-align:top;padding-bottom:8px;"></td></tr>
+						<tr><td style="vertical-align:top;padding-bottom:8px;">目标：</td><td style="vertical-align:top;padding-bottom:8px;"><span id="span_study13Goal"></span> 总暗轴</td></tr>
+						<tr><td style="vertical-align:top;padding-bottom:8px;">完成次数：</td><td style="vertical-align:top;padding-bottom:8px;"><span id="span_study13Completions"></span>/<span id="span_study13MaxCompletions"></span></td></tr>
+						<tr><td style="vertical-align:top;padding-bottom:8px;">奖励：</td><td id="span_study13Reward" style="vertical-align:top;padding-bottom:8px;"></td></tr>
+					</table>
+				</div>
+				<div class="navigationtier3">
+					<button id="button_tier3tab_wormhole_study13_bindings" class="tabtier3 wormhole_study13" onClick="study13.openT3('bindings')">绑定</button>
+					<button id="button_tier3tab_wormhole_study13_rewards" class="tabtier3 wormhole_study13" onClick="study13.openT3('rewards')" style="filter:brightness(60%)">奖励</button>
+				</div>
+				<div class="tier3tab wormhole_study13" id="tier3tab_wormhole_study13_bindings">
+					<div id="study13BindingContainer" style="width:696px;overflow:auto;padding-right:400px;position:relative">
+						<canvas style="position:absolute;top:0px;left:15px;z-index:1" id="study13BindingCanvas" width="666"></canvas>
+						<div style="position:absolute;top:0px;left:15px;z-index:2"><table id="study13BindingTable"></table></div>
+					</div>
+					<div id="study13BindingInfo"></div>
+				</div>
+				<div class="tier3tab wormhole_study13" id="tier3tab_wormhole_study13_rewards" style="display:none">
+					<table>
+						<tr>
+							<td><div class="study13RewardDiv" style="width:700px;" id="study13RewardContainer"></div></td>
+							<td><div class="study13RewardDiv" style="width:500px;" id="study13RewardInfo"></div></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- 选项界面 -->
+		<div class="tab" id="bigtab_options" style="display:none;font-size:0;">
+			<div class="optionsNavigation globalnavigation">
+				<button class="tabtier2 tier2options" onClick="openSubTab('options','options')" id="button_subtab_options_options">选项</button>
+				<button class="tabtier2 tier2options" onClick="openSubTab('options','hotkeys')" id="button_subtab_options_hotkeys" style="filter:brightness(60%)">热键</button>
+				<button class="tabtier2 tier2options" onClick="openSubTab('options','story')" id="button_subtab_options_story" style="filter:brightness(60%)">故事</button>
+			</div>
+
+			<div class="subtab options" id="subtab_options_options">
+				<button class="optionsbutton" onClick="selectOption('notation',Object.keys(notations),'notation')">
+					表示法：<span id="notation"></span>
+				</button>
+				<button class="optionsbutton" onClick="save()">保存</button>
+				<button class="optionsbutton" onClick="toggle('autosaveIsOn')">
+					自动保存：<span id="toggleAutosave"></span>
+				</button>
+				<button class="optionsbutton" onClick="wipeSavePopup()" style="background-color:#000000;color:#ff0000;">
+					清除存档
+				</button>
+				<button class="optionsbutton" onClick="importSave()">导入存档</button>
+				<button class="optionsbutton" onClick="exportSave()">导出存档</button>
+				<button class="optionsbutton" onClick="openExport(savePreLoad)">导出会话开始时的存档</button>
+				<button class="optionsbutton" onClick="inputPromo()">输入推广码</button>
+				<button class="optionsbutton" onClick="changeTheme()">
+					主题：<span id="colortheme"></span>
+				</button>
+				<button class="optionsbutton" onClick="selectOption('footerDisplay',['All tabs','Only Axis tab','None'],'mode')" id="button_footerDisplay"></button>
+				<button class="optionsbutton" onClick="toggle('newsTickerActive')">
+					新闻滚动条 <span id="span_newsTickerActive"></span> 启用
+				</button>
+				<button class="optionsbutton" onClick="selectOption('newsTickerSpeed',[40,60,80,120,160,200,300,400,500,750,999],'speed',x=>N(x).noLeadFormat(2))">
+					新闻滚动速度：<span id="span_newsTickerSpeed"></span> px·s<sup>-1</sup>
+				</button>
+				<button class="optionsbutton" onClick="selectOption('newsTickerDilation',[0,0.0625,0.125,0.1875,0.25],'mode',x=>dictionary(x,{'0':'无','0.0625':'弱','0.125':'中等','0.1875':'强','0.25':'极强'}))">
+					超频时新闻滚动加速：<span id="span_newsTickerDilation"></span>
+				</button>
+				<button class="optionsbutton" onClick="g.confirmations.doubleClickToBuy=!g.confirmations.doubleClickToBuy" id="button_options_doubleClickToBuy"></button>
+				<button class="optionsbutton" onClick="selectOption('EMDLevelDisplayInFooter',[0,1,2],'mode',x=>dictionary(x,{'0':'无','1':'仅等级','2':'等级和分数'}))" id="button_options_EMDLevelDisplayInFooter"></button>
+			</div>
+
+			<div class="subtab options" id="subtab_options_hotkeys" style="display:none"></div>
+			<div class="subtab options" id="subtab_options_story" style="display:none">
+				<button class="optionsbutton" onClick="showPreviousStory()">显示以前的故事条目</button>
+			</div>
+		</div>
+
+		<!-- 统计界面 -->
+		<div class="tab" id="bigtab_statistics" style="display:none">
+			<div class="statisticsNavigation globalnavigation">
+				<button class="tabtier2 tier2statistics" onClick="openSubTab('statistics','statistics')" id="button_subtab_statistics_statistics">统计</button>
+				<button class="tabtier2 tier2statistics" onClick="openSubTab('statistics','largeNumberVisualization')" style="filter:brightness(60%);font-size:9px" id="button_subtab_statistics_largeNumberVisualization">大数可视化</button>
+				<button class="tabtier2 tier2statistics" onClick="openSubTab('statistics','statBreakdown')" style="filter:brightness(60%)" id="button_subtab_statistics_statBreakdown">统计明细</button>
+				<button class="tabtier2 tier2statistics" onClick="openSubTab('statistics','previousPrestiges')" id="button_subtab_statistics_previousPrestiges" style="display:none;filter:brightness(60%)">以前的声望</button>
+			</div>
+
+			<div class="subtab statistics" id="subtab_statistics_statistics">
+				<table id="mainStatTable" style="border-spacing: 0"></table>
+				<p>随着进度深入，会出现更多统计！</p>
+			</div>
+
+			<div class="subtab statistics" id="subtab_statistics_largeNumberVisualization" style="display:none"></div>
+
+			<div class="subtab statistics" id="subtab_statistics_statBreakdown" style="display:none">
+				<div id="SSBnav1" class="navigationtier3"></div>
+				<div id="SSBnav2" class="navigationtier4"></div>
+				<table id="SSBtable"></table>
+			</div>
+
+			<div class="subtab statistics" id="subtab_statistics_previousPrestiges" style="display:none">
+				<div class="navigationtier3 globalnavigation">
+					<button class="tabtier3 statistics previousPrestigeTabButton" onClick="previousPrestige.showTab('div_previousStardustRuns')">星尘</button>
+					<button class="tabtier3 statistics previousPrestigeTabButton" onClick="previousPrestige.showTab('div_previousWormholeRuns')" style="display:none;filter:brightness(60%)" id="button_previousPrestige_wormholeTab">虫洞</button>
+				</div>
+				<div id="div_previousStardustRuns" class="previousPrestigeTab">
+					<table id="table_last10StardustRuns">
+						<tr><th colspan="4" class="tablecell">最近 10 次星尘运行</th></tr>
+						<tr>
+							<th style="width:30px" class="tablecell">#</th>
+							<th style="width:calc(33vw - 20px)" class="tablecell">耗时</th>
+							<th style="width:calc(33vw - 20px)" class="tablecell">获得的星尘</th>
+							<th style="width:calc(33vw - 20px)" class="tablecell" id="span_last10StardustRuns_buildnames">
+								<span class="previousPrestigeBuildList"></span>
+							</th>
+						</tr>
+					</table>
+					<div id="div_bestStardustRuns"></div>
+				</div>
+				<div id="div_previousWormholeRuns" class="previousPrestigeTab" style="display:none">
+					<table id="table_last10WormholeRuns">
+						<tr><th colspan="4" class="tablecell">最近 10 次虫洞运行</th></tr>
+						<tr>
+							<th style="width:30px" class="tablecell">#</th>
+							<th style="width:calc(33vw - 20px)" class="tablecell">耗时</th>
+							<th style="width:calc(33vw - 20px)" class="tablecell">获得的 HR</th>
+							<th style="width:calc(33vw - 20px)" class="tablecell" id="span_last10WormholeRuns_buildnames">
+								<span class="previousPrestigeBuildList"></span>
+							</th>
+						</tr>
+					</table>
+					<div id="div_bestWormholeRuns"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- 成就界面 -->
+		<div class="tab" id="bigtab_achievements" style="display:none">
+			<div class="achievementsNavigation globalnavigation">
+				<button class="tabtier2 tier2achievements" onClick="openSubTab('achievements','mainAchievements')" id="button_subtab_achievements_mainAchievements">成就</button>
+				<button class="tabtier2 tier2achievements" onClick="openSubTab('achievements','secretAchievements')" style="display:none;font-size:11px;filter:brightness(60%)" id="button_subtab_achievements_secretAchievements">隐藏成就</button>
+				<button class="tabtier2 tier2achievements" onClick="openSubTab('achievements','wormholeMilestones')" style="display:none;font-size:11px;filter:brightness(60%)" id="button_subtab_achievements_wormholeMilestones">虫洞里程碑</button>
+			</div>
+
+			<div class="subtab achievements" id="subtab_achievements_mainAchievements">
+				<button class="featureConfig achievements" onClick="openConfig['Achievement']()"></button>
+				<span id="span_noAchievements" style="display:none">你还没有获得任何成就。</span>
+				<div id="achievementContainer"></div>
+				<button class="genericbutton size2" id="button_achievementToProgressBar" onClick="achievement.selectForProgressBar()"></button>
+				<div id="achievementInfo" class="tooltip" style="visibility:hidden"></div>
+			</div>
+
+			<div class="subtab achievements" id="subtab_achievements_secretAchievements" style="display:none">
+				<p>
+					你有 <span id="span_secretAchievementPoints" class="big _achievements"></span> 隐藏成就点数。
+					每个隐藏成就点数给予一个超级秘密加成！
+				</p>
+				<div id="secretAchievementContainer"></div>
+				<div id="secretAchievementInfo" class="tooltip" style="visibility:hidden"></div>
+			</div>
+
+			<div class="subtab achievements" id="subtab_achievements_wormholeMilestones" style="display:none">
+				<p>
+					每个第 5 层成就根据解锁的总数给予额外的便利性提升。
+					你目前有 <span class="big _wormhole" id="span_wormholeMilestoneT5Achievements"></span> 个第 5 层成就。
+				</p>
+				<div id="wormholeMilestoneContainer"></div>
+			</div>
+		</div>
+
+		<!-- 自动化界面 -->
+		<div class="tab" id="bigtab_automation" style="display:none">
+			<div class="automationNavigation globalnavigation" style="display:none">
+				<button class="tabtier2 tier2automation" onClick="openSubTab('automation','automation')" id="button_subtab_automation_automation">自动化</button>
+			</div>
+
+			<div class="subtab automation" id="subtab_automation_automation">
+				<div class="automatordiv" id="axisAutobuyer">
+					<span class="autobuyerlevel" id="span_axisAutobuyerLevel"></span>
+					<h3>轴自动购买器</h3>
+					<button class="automatortoggle" id="button_axisAutobuyerToggle" onClick="toggle('axisAutobuyerOn')"></button><br>
+					间隔：<span id="span_axisAutobuyerInterval"></span><br>
+					<button id="button_axisAutobuyerUpgrade" class="autobuyerupgrade" onClick="upgradeAutobuyer('axis')"></button><br>
+					<div id="div_axisAutobuyerLimits"></div>
+				</div>
+
+				<div class="automatordiv" id="darkAxisAutobuyer" style="display:none">
+					<span class="autobuyerlevel" id="span_darkAxisAutobuyerLevel"></span>
+					<h3>暗轴自动购买器</h3>
+					<button class="automatortoggle" id="button_darkAxisAutobuyerToggle" onClick="toggle('darkAxisAutobuyerOn')"></button><br>
+					间隔：<span id="span_darkAxisAutobuyerInterval"></span><br>
+					<button id="button_darkAxisAutobuyerUpgrade" class="autobuyerupgrade" onClick="upgradeAutobuyer('darkAxis')"></button><br>
+					<div id="div_darkAxisAutobuyerLimits"></div>
+				</div>
+
+				<div class="automatordiv" id="stardustUpgradeAutobuyer" style="display:none">
+					<span class="autobuyerlevel" id="span_stardustUpgradeAutobuyerLevel"></span>
+					<h3>星尘升级自动购买器</h3>
+					<button class="automatortoggle" id="button_stardustUpgradeAutobuyerToggle" onClick="toggle('stardustUpgradeAutobuyerOn')"></button><br>
+					间隔：<span id="span_stardustUpgradeAutobuyerInterval"></span><br>
+					<button id="button_stardustUpgradeAutobuyerUpgrade" class="autobuyerupgrade" onClick="upgradeAutobuyer('stardustUpgrade')"></button><br>
+					<table id="div_stardustUpgradeAutobuyerLimits"></table>
+					<button id="button_lockManualStardustUpgrades" class="genericbutton size2" onClick="g.confirmations.buyStardustUpgrade=!g.confirmations.buyStardustUpgrade"></button>
+				</div>
+
+				<div class="automatordiv" id="starAutobuyer" style="display:none">
+					<span class="autobuyerlevel" id="span_starAutobuyerLevel"></span>
+					<h3>星星自动购买器</h3>
+					<button class="automatortoggle" id="button_starAutobuyerToggle" onClick="toggle('starAutobuyerOn')"></button><br>
+					间隔：<span id="span_starAutobuyerInterval"></span><br>
+					<button id="button_starAutobuyerUpgrade" class="autobuyerupgrade" onClick="upgradeAutobuyer('star')"></button><br>
+					<label for="starAutobuyerMax" style="font-weight:700;">最大购买星星数：</label>
+					<input id="starAutobuyerMax" type="text"></input><br>
+					<span id="wormholeMilestone5">
+						<hr>
+						<h3>星星分配器</h3>
+						<button class="automatortoggleon" id="button_starAllocatorToggle" onClick="toggle('starAllocatorOn')"></button><br>
+						<button class="narrowbutton" onClick="inputStarAllocatorBuild.selectRow()">编辑配置</button><br>
+						<button class="narrowbutton" onClick="importStarAllocatorBuild()">导入配置</button>
+						<button class="narrowbutton" onClick="exportStarAllocatorBuild()">导出配置</button><br>
+						星星分配器与自动购买器运行在相同的间隔上。
+					</span>
+				</div>
+
+				<div class="automatordiv" id="stardustAutomator" style="display:none">
+					<h3>星尘重置自动装置</h3>
+					<button class="automatortoggle" id="button_stardustAutomatorToggle" onClick="toggle('stardustAutomatorOn')"></button><br>
+					<label for="stardustAutomatorMode">设置：</label>
+					<button class="genericbutton size3" id="button_stardustAutomatorMode" onClick="selectOption('stardustAutomatorMode',countTo(stardustAutomatorModes.length,true),'mode',x=>stardustAutomatorModes[x])"></button><br>
+					<input id="stardustAutomatorValue" type="text"></input>
+				</div>
+
+				<div class="automatordiv" id="wormholeAutomator" style="display:none">
+					<h3>虫洞重置自动装置</h3>
+					<button class="automatortoggle" id="button_wormholeAutomatorToggle" onClick="toggle('wormholeAutomatorOn')"></button><br>
+					<label for="wormholeAutomatorMode">设置：</label>
+					<button class="genericbutton size3" id="button_wormholeAutomatorMode" onClick="selectOption('wormholeAutomatorMode',countTo(wormholeAutomatorModes.length,true),'mode',x=>wormholeAutomatorModes[x])"></button><br>
+					<input id="wormholeAutomatorValue" type="text"></input>
+				</div>
+
+				<div class="automatordiv" id="researchAutobuyer" style="display:none">
+					<span class="autobuyerlevel" id="span_researchAutobuyerLevel"></span>
+					<h3>研究自动购买器</h3>
+					<button class="automatortoggle" id="button_researchAutobuyerToggle" onClick="toggle('researchAutobuyerOn')"></button><br>
+					间隔：<span id="span_researchAutobuyerInterval"></span><br>
+					<button id="button_researchAutobuyerUpgrade" class="autobuyerupgrade" onClick="upgradeAutobuyer('research')"></button><br>
+					<div id="div_researchAutobuyerMode" style="display:none">
+						<label for="researchAutobuyerMode">设置：</label>
+						<button class="genericbutton size3" id="button_researchAutobuyerMode" onClick="selectOption('researchAutobuyerMode',countTo(researchAutobuyerModes.length,true),'mode',x=>researchAutobuyerModes[x])"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- 页脚 -->
+		<div id="footer">
+			<div id="gameprogress" class="progress" onClick="progressBarOnClick()"></div>
+			<a href="changelog.html" target="_blank">更新日志</a> |
+			<a href="https://forms.gle/G9ixRuWv3yPZCQWT7" target="_blank">联系我们</a> |
+			<a id="span_footerDiscord" target="_blank">Discord</a> |
+			<button class="howtoplay" onClick="htpNavigation()">玩法说明</button> |
+			<a href="https://alemaninc.github.io/" target="_blank">更多 by alemaninc</a> |
+			<a href="https://www.reddit.com/r/incremental_games/comments/1dfx5hx/exotic_matter_dimensions_%F0%9D%95%8D1%CF%89/" target="_blank">Reddit</a> |
+			<a href="savebank.html" target="_blank">存档库</a> |
+			版本 <span id="span_currentVersion"></span><span id="span_footerEMDLevel"></span>
+		</div>
+
+	</div>
+
+	<!-- 弹窗 -->
+	<div id="div_fancyPopupScreen" class="popupScreen">
+		<div id="div_fancyPopup" class="popup">
+			<span id="span_fancyPopupText"></span>
+			<br>
+			<span id="span_fancyPopupButtons"></span>
+		</div>
+	</div>
+
+	<!-- 加载界面 -->
+	<div id="loadScreen" class="topleveldiv">
+		<h1>加载游戏中...</h1>
+		<div class="progress" id="loadprogress">
+			<span id="span_loadPercentage"></span>% 已加载
+		</div><br><br>
+		存档文件：<br>
+		<textarea id="loadScreenExport"></textarea>
+	</div>
+
+	<div id="wormholeAnimation" class="topleveldiv" style="display:none;opacity:0"></div>
+	<div id="notifyDiv"></div>
+	<div id="background"></div>
+	<div id="foo"></div>
+
+	<script type="text/javascript" src="alemaninc_utility.js"></script>
+	<script type="text/javascript" src="break_eternity_alemaninc.js"></script>
+	<script type="text/javascript" src="emd_utility.js"></script>
+	<script type="text/javascript" src="data.js"></script>
+	<script type="text/javascript" src="iconGen.js"></script>
+	<script type="text/javascript" src="researchtree.js"></script>
+	<script type="text/javascript" src="study13.js"></script>
+	<script type="text/javascript" src="achievements.js"></script>
+	<script type="text/javascript" src="previousprestige.js"></script>
+	<script type="text/javascript" src="navigation.js"></script>
+	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript" src="statbreakdown.js"></script>
+	<script type="text/javascript" src="howtoplay.js"></script>
+	<script type="text/javascript" src="newsticker.js"></script>
+	<script type="text/javascript" src="htmlgenerator.js"></script>
+	<script type="text/javascript" src="gameloop.js"></script>
+	<script type="text/javascript" src="initialize.js"></script>
+
+</body>
+</html>
