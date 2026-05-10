@@ -1,159 +1,281 @@
 "use strict";
 var initComplete = false
 const version = {
-	current:"𝕍1ω.15",
-	nextPercentage:function(x=version.nextProgress){return (typeof x === "number")?x:(x.map(i=>version.nextPercentage(i)).sum()/x.length)},
-	percentage:function(){return "["+(this.nextPercentage()*100).toFixed(0)+"%]"},
-	nextProgress:[
-		0.71
-	],
-	nextUpdateHint:"机器药物", // Machine medicine → 机器药物
+    current:"𝕍1ω.15",
+    nextPercentage:function(x=version.nextProgress){return (typeof x === "number")?x:(x.map(i=>version.nextPercentage(i)).sum()/x.length)},
+    percentage:function(){return "["+(this.nextPercentage()*100).toFixed(0)+"%]"},
+    nextProgress:[
+        0.71
+    ],
+    nextUpdateHint:"机器药物", // Machine medicine → 机器药物
 }
 /*
-	e 事件消息
-	s 文件URL
-	l 行号
-	c 列号
-	o 错误对象
+    e 事件消息
+    s 文件URL
+    l 行号
+    c 列号
+    o 错误对象
 */
 var gameHalted = false
 var showFormulas = false
 const discordInvite = "https://discord.gg/aK6Bvwr2fw"
 function halt() { // 终止游戏循环，用于调试
-	clearInterval(gameloop);
-	clearInterval(fineGrainLoop);
-	gameHalted = true
+    clearInterval(gameloop);
+    clearInterval(fineGrainLoop);
+    gameHalted = true
 }
 function notify(text,backgroundColor="#"+Math.floor(Math.random()*16777216).toString(16).padStart(6,"0"),textColor) {
-	do {
-		var id = ranint(0,Number.MAX_SAFE_INTEGER) // 最大范围以最小化冲突
-	} while (d.element("button_notification"+id)!==null) // 避免冲突
-	document.getElementById("notifyDiv").innerHTML = "<button id=\"button_notification"+id+"\" style=\"background-color:"+backgroundColor+";left:700px;cursor:pointer\" class=\"notification\" data-in=\""+Date.now()+"\" data-out=\""+(Date.now()+6000)+"\" onClick=\"this.dataset.out=Math.min(Date.now(),this.dataset.out)\">"+text+"</button><br>"+document.getElementById("notifyDiv").innerHTML
-	if (textColor===undefined) {textColor = blackOrWhiteContrast(getComputedStyle(d.element("button_notification"+id))["background-color"])}
-	d.element("button_notification"+id).style.color = textColor
+    do {
+        var id = ranint(0,Number.MAX_SAFE_INTEGER) // 最大范围以最小化冲突
+    } while (d.element("button_notification"+id)!==null) // 避免冲突
+    document.getElementById("notifyDiv").innerHTML = "<button id=\"button_notification"+id+"\" style=\"background-color:"+backgroundColor+";left:700px;cursor:pointer\" class=\"notification\" data-in=\""+Date.now()+"\" data-out=\""+(Date.now()+6000)+"\" onClick=\"this.dataset.out=Math.min(Date.now(),this.dataset.out)\">"+text+"</button><br>"+document.getElementById("notifyDiv").innerHTML
+    if (textColor===undefined) {textColor = blackOrWhiteContrast(getComputedStyle(d.element("button_notification"+id))["background-color"])}
+    d.element("button_notification"+id).style.color = textColor
 }
 function error(text) {
-	halt()
-	popup({text:"错误: "+text+".<br>请将此信息告知 alemaninc 并提供控制台输出。<br><table style=\"table-layout:fixed;width:calc(100% - 32px)\"><colgroup><col style=\"width:50%\"></col><col style=\"width:50%\"></col></colgroup><tr><td>错误前的存档:</td><td>会话开始时的存档:</td></tr><tr><td><textarea id=\"span_fancyPopupInput\" style=\"width:100%\">"+btoa(unescape(encodeURIComponent(localStorage.getItem("save"))))+"</textarea></td><td><textarea id=\"span_fancyPopupInput\" style=\"width:100%\">"+savePreLoad+"</textarea><td></tr></table><br><a href=\""+discordInvite+"\" target=\"_blank\">Discord</a>",buttons:[]})
-	console.error()
+    halt();
+    
+    // 安全地获取存档数据
+    let currentSave = localStorage.getItem("save");
+    let sessionStartSave = savePreLoad; // 假设 savePreLoad 是会话开始时的存档
+    
+    // 如果存档为 null，设置为空字符串
+    if (currentSave === null) currentSave = "（存档为空）";
+    if (sessionStartSave === null || sessionStartSave === undefined) sessionStartSave = "（会话开始存档不可用）";
+    
+    popup({
+        text:"错误: "+text+".<br>请将此信息告知 alemaninc 并提供控制台输出。<br>"+
+        "<table style=\"table-layout:fixed;width:calc(100% - 32px)\">"+
+        "<colgroup><col style=\"width:50%\"></col><col style=\"width:50%\"></col></colgroup>"+
+        "<tr><td>错误前的存档:</td><td>会话开始时的存档:</td></tr>"+
+        "<tr>"+
+        "<td><textarea id=\"span_fancyPopupInput1\" style=\"width:100%;height:150px;\">"+currentSave+"</textarea></td>"+
+        "<td><textarea id=\"span_fancyPopupInput2\" style=\"width:100%;height:150px;\">"+sessionStartSave+"</textarea></td>"+
+        "</tr></table><br>"+
+        "<a href=\""+discordInvite+"\" target=\"_blank\">Discord</a>",
+        buttons:[]
+    });
+    
+    // 记录错误到控制台
+    console.error("游戏错误:", text);
+    console.log("当前存档:", currentSave);
+    console.log("会话开始存档:", sessionStartSave);
 }
 const debug = {
-	scoreUnclassifiedSave:function(){
-		let d = new Date()
-		return "U_"+((d.getUTCMonth()+1)*5000000+d.getUTCDate()*100000+d.getUTCHours()*3600+d.getUTCMinutes()*60+d.getUTCSeconds())
-	},
-	stats: function(){for(let i of statOrder){try{updateStat(i)}catch{console.error(i)}}},
-	secretAchievementDistribution: function(){
-		let out = Array(7).fill(0)
-		for (let i of Object.values(secretAchievementList).map(x=>x.rarity)) out[i-1]++
-		return out
-	},
-	addResearch:function(x){
-		g.research=x
-		if (!g.researchVisibility.includes(x)) g.researchVisibility.push(x)
-	},
+    scoreUnclassifiedSave:function(){
+        let d = new Date()
+        return "U_"+((d.getUTCMonth()+1)*5000000+d.getUTCDate()*100000+d.getUTCHours()*3600+d.getUTCMinutes()*60+d.getUTCSeconds())
+    },
+    stats: function(){for(let i of statOrder){try{updateStat(i)}catch{console.error(i)}}},
+    secretAchievementDistribution: function(){
+        let out = Array(7).fill(0)
+        for (let i of Object.values(secretAchievementList).map(x=>x.rarity)) out[i-1]++
+        return out
+    },
+    addResearch:function(x){
+        g.research=x
+        if (!g.researchVisibility.includes(x)) g.researchVisibility.push(x)
+    },
 }
 var savecounter=0;
 
-Decimal.prototype.fix = function(x,crash=true) {									 // 如果输入不是数字，则返回x。建议输入该变量的单位元，即如果是加法操作则为0，如果是乘法或指数或迭代高度则为1。
-	if (this.isNaN()) {
-		if (crash) {error("检测到NaN错误，已被alemaninc的系统标记")}
-		return N(x)
-	} else {
-		return this
-	}
+// 添加一个安全的 N 函数包装器
+function safeN(value, fallback) {
+    try {
+        if (value === undefined || value === null) return N(fallback);
+        return N(value);
+    } catch (e) {
+        console.error("Decimal 转换错误:", e, "值:", value);
+        return N(fallback);
+    }
+}
+
+Decimal.prototype.fix = function(x,crash=true) {                                     // 如果输入不是数字，则返回x。建议输入该变量的单位元，即如果是加法操作则为0，如果是乘法或指数或迭代高度则为1。
+    if (this.isNaN()) {
+        if (crash) {error("检测到NaN错误，已被alemaninc的系统标记")}
+        return safeN(x, 0);
+    } else {
+        return this
+    }
 }
 
 function toggle(x) {
-	g[x]=!g[x];
+    g[x]=!g[x];
 }
 function multitoggle(variable,options) {
-	g[variable]=options[(options.indexOf(g[variable])+1)%options.length];
+    g[variable]=options[(options.indexOf(g[variable])+1)%options.length];
 }
 /*
 弹窗数据属性列表:
-text				 显示的文本
-input				可选的输入字段，包括基础值
-buttons			按钮数组
+text                 显示的文本
+input                可选的输入字段，包括基础值
+buttons            按钮数组
 */
 function popup(data) {
-	d.display("div_fancyPopupScreen","inline-block")
-	d.innerHTML("span_fancyPopupText",data.text)
-	if (data.input !== undefined) d.element("span_fancyPopupText").innerHTML += "<br><textarea id=\"span_fancyPopupInput\" style=\"width:90%;height:40%\">"+data.input+"</textarea>"
-	d.innerHTML("span_fancyPopupButtons","")
-	for (let i of (data.buttons??[["关闭",""]])) d.element("span_fancyPopupButtons").innerHTML += "<button onClick=\"hidePopup();"+i[1]+"\" class=\"genericbutton size"+(data.buttonSize??3)+"\">"+i[0]+"</button>"
+    try {
+        d.display("div_fancyPopupScreen","inline-block");
+        d.innerHTML("span_fancyPopupText", data.text || "");
+        
+        if (data.input !== undefined) {
+            d.element("span_fancyPopupText").innerHTML += "<br><textarea id=\"span_fancyPopupInput\" style=\"width:90%;height:40%\">"+(data.input || "")+"</textarea>";
+        }
+        
+        d.innerHTML("span_fancyPopupButtons","");
+        for (let i of (data.buttons || [["关闭",""]])) {
+            d.element("span_fancyPopupButtons").innerHTML += "<button onClick=\"hidePopup();"+i[1]+"\" class=\"genericbutton size"+(data.buttonSize||3)+"\">"+i[0]+"</button>";
+        }
+    } catch (e) {
+        console.error("弹窗创建失败:", e);
+        // 简单的后备弹窗
+        alert("错误: " + (data.text || "未知错误") + "\n" + (e.message || ""));
+    }
 }
 function hidePopup() {
-	d.display('div_fancyPopupScreen','none')
-	newsSupport.readMoreIteration=0
+    d.display('div_fancyPopupScreen','none');
+    if (typeof newsSupport !== 'undefined' && newsSupport) {
+        newsSupport.readMoreIteration = 0;
+    }
 }
-function popupInput() {return d.element("span_fancyPopupInput").value}
-function functionError(functionName,argumentList) {error("无法访问 <code>"+functionName+"("+Object.values(argumentList).map(x=>JSON.stringify(x)).join(",")+")</code>")}
-function textFormat(text,className){return "<span class=\"big "+className+"\">"+text+"</span>"}
-function BEformat(value,precision=0,highPrecision=0) {return gformat(value,precision,g.notation,g.notation,highPrecision).replaceAll(" ","&nbsp;");}
+function popupInput() {
+    // 首先尝试获取 span_fancyPopupInput（通用输入框）
+    let inputElement = d.element("span_fancyPopupInput");
+    if (inputElement) {
+        return inputElement.value;
+    }
+    
+    // 如果没有通用输入框，尝试获取第一个特定ID的输入框
+    for (let i = 1; i <= 5; i++) {
+        let id = "span_fancyPopupInput" + i;
+        inputElement = d.element(id);
+        if (inputElement) {
+            return inputElement.value;
+        }
+    }
+    
+    // 如果都没有找到，返回空字符串
+    return "";
+}
+
+function functionError(functionName,argumentList) {
+    // 安全地处理参数
+    let argsString = "";
+    
+    if (argumentList && typeof argumentList === 'object') {
+        // 如果是数组，直接使用
+        if (Array.isArray(argumentList)) {
+            argsString = argumentList.map(x => JSON.stringify(x)).join(",");
+        } 
+        // 如果是对象，使用其值
+        else {
+            try {
+                argsString = Object.values(argumentList).map(x => JSON.stringify(x)).join(",");
+            } catch (e) {
+                // 如果 Object.values 失败，回退到字符串表示
+                argsString = String(argumentList);
+            }
+        }
+    } else if (argumentList !== undefined && argumentList !== null) {
+        // 如果 argumentList 是基本类型
+        argsString = String(argumentList);
+    }
+    // 否则 argsString 保持为空字符串
+    
+    error("无法访问 <code>"+functionName+"("+argsString+")</code>");
+}
+
+function textFormat(text,className){
+    return "<span class=\"big "+className+"\">"+text+"</span>";
+}
+
+function BEformat(value,precision=0,highPrecision=0) {
+    // 安全检查
+    if (typeof gformat === 'undefined') {
+        console.warn("gformat 函数未定义");
+        return safeN(value, 0).toString();
+    }
+    if (typeof g === 'undefined' || typeof g.notation === 'undefined') {
+        console.warn("g 或 g.notation 未定义");
+        return safeN(value, 0).toString();
+    }
+    return gformat(safeN(value, 0), precision, g.notation, g.notation, highPrecision).replaceAll(" ","&nbsp;");
+}
 function timeFormat(x) {
-	x = N(x);
-	if (x.eq(constant.d0)) return "0秒";
-	if (x.eq(Infinity)) return "无限时间";
-	if (x.lt(constant.d0)) return "-"+timeFormat(x.neg())
-	if (x.lt(constant.em30)) return "(1 ÷ "+x.recip().noLeadFormat(2)+")秒";
-	if (x.lt(constant.d1)) {
-		let exp = x.log10().div(constant.d3).neg().ceil();
-		let num = x.mul(constant.e3.pow(exp)).noLeadFormat(2)
-		let unit = ["毫","微","纳","皮","飞","阿","仄","幺","柔","亏"][exp.toNumber()-1]+"秒"+((num==="1")?"":"");
-		return num+" "+unit;
-	}
-	if (x.lt(constant.d60)) return x.noLeadFormat(2)+"秒";
-	if (x.lt(constant.d3600)) return x.div(constant.d60).digits(2)+":"+x.mod(constant.d60).digits(2);
-	if (x.lt(constant.d86400)) return x.div(constant.d3600).digits(2)+":"+x.div(constant.d60).mod(constant.d60).digits(2)+":"+x.mod(constant.d60).digits(2);
-	if (x.lt(constant.e9)) return x.div(constant.d86400).floor()+"天"+" "+x.div(constant.d3600).mod(constant.d24).digits(2)+":"+x.div(constant.d60).mod(constant.d60).digits(2)+":"+x.mod(constant.d60).digits(2);
-	return BEformat(x.div(constant.d31556926),0)+"年";
+    x = safeN(x, 0);
+    if (x.eq(constant.d0)) return "0秒";
+    if (x.eq(Infinity)) return "无限时间";
+    if (x.lt(constant.d0)) return "-"+timeFormat(x.neg());
+    if (x.lt(constant.em30)) return "(1 ÷ "+x.recip().noLeadFormat(2)+")秒";
+    if (x.lt(constant.d1)) {
+        let exp = x.log10().div(constant.d3).neg().ceil();
+        let num = x.mul(constant.e3.pow(exp)).noLeadFormat(2);
+        let unit = ["毫","微","纳","皮","飞","阿","仄","幺","柔","亏"][exp.toNumber()-1]+"秒"+((num==="1")?"":"");
+        return num+" "+unit;
+    }
+    if (x.lt(constant.d60)) return x.noLeadFormat(2)+"秒";
+    if (x.lt(constant.d3600)) return x.div(constant.d60).digits(2)+":"+x.mod(constant.d60).digits(2);
+    if (x.lt(constant.d86400)) return x.div(constant.d3600).digits(2)+":"+x.div(constant.d60).mod(constant.d60).digits(2)+":"+x.mod(constant.d60).digits(2);
+    if (x.lt(constant.e9)) return x.div(constant.d86400).floor()+"天"+" "+x.div(constant.d3600).mod(constant.d24).digits(2)+":"+x.div(constant.d60).mod(constant.d60).digits(2)+":"+x.mod(constant.d60).digits(2);
+    return BEformat(x.div(constant.d31556926),0)+"年";
 }
 function rateFormat(x) {
-	x = N(x);
-	if (!Decimal.valid(x)) throw "无法访问rateFormat("+x+")"
-	if (x.sign === 0) return "0每秒"
-	if (x.sign === -1) return "-"+rateFormat(x.neg())
-	if (x.eq(constant.d1)) return "1每秒"
-	if (x.gt(constant.d1)) return x.noLeadFormat(2)+"每秒"
-	if (x.lt(constant.d1)) return "1每"+timeFormat(x.recip())
-	throw "无法访问rateFormat("+x+")"
+    x = safeN(x, 0);
+    if (!Decimal.valid(x)) {
+        console.warn("rateFormat 无效输入:", x);
+        return "0每秒";
+    }
+    if (x.sign === 0) return "0每秒";
+    if (x.sign === -1) return "-"+rateFormat(x.neg());
+    if (x.eq(constant.d1)) return "1每秒";
+    if (x.gt(constant.d1)) return x.noLeadFormat(2)+"每秒";
+    if (x.lt(constant.d1)) return "1每"+timeFormat(x.recip());
+    console.warn("rateFormat 未知情况:", x);
+    return "0每秒";
 }
 Decimal.prototype.format = function(precision,highPrecision) {
-	return BEformat(this,precision,highPrecision);
+    return BEformat(this, precision, highPrecision);
 };
 Decimal.prototype.noLeadFormat = function(precision,tolerance=1e-7) {
-	if (this.layer !== 0) return BEformat(this)
-	let exponent = this.abs().log10().add(1e-8).floor()
-	for (let i=0;i<precision;i++) if (Decimal.eq_tolerance(this.mul(Decimal.pow(10,i-exponent)),this.mul(Decimal.pow(10,i-exponent)).round(),tolerance)) return BEformat(this,i)
-	return BEformat(this,precision)
+    if (this.layer !== 0) return BEformat(this);
+    let exponent = this.abs().log10().add(1e-8).floor();
+    for (let i=0; i<precision; i++) {
+        if (Decimal.eq_tolerance(this.mul(Decimal.pow(10, i-exponent)), this.mul(Decimal.pow(10, i-exponent)).round(), tolerance)) {
+            return BEformat(this, i);
+        }
+    }
+    return BEformat(this, precision);
 }
 Decimal.prototype.formatFrom1 = function(precision) {
-	return this.eq(c.d1)?"1":this.noLeadFormat(Math.max(0,Math.min(15,precision+Math.max(0,1-Math.ceil(this.sub(c.d1).abs().max(1e-15).min(1e15).log(constant.d10).toNumber())))),1e-12)
+    return this.eq(c.d1) ? "1" : this.noLeadFormat(Math.max(0, Math.min(15, precision+Math.max(0, 1-Math.ceil(this.sub(c.d1).abs().max(1e-15).min(1e15).log(constant.d10).toNumber())))), 1e-12);
 }
 d.glow = function(id,active){
-	if (active) document.getElementById(id).classList.add("glownotify");
-	else document.getElementById(id).classList.remove("glownotify");
+    let element = document.getElementById(id);
+    if (element) {
+        if (active) {
+            element.classList.add("glownotify");
+        } else {
+            element.classList.remove("glownotify");
+        }
+    }
 }
-const o = {			// o = "操作"
-	add(variable,value) {
-		g[variable]=g[variable].add(value).fix(0);
-	},
-	sub(variable,value) {
-		g[variable]=g[variable].sub(value).fix(0);
-	},
-	mul(variable,value) {
-		g[variable]=g[variable].mul(value).fix(1);
-	},
-	div(variable,value) {
-		g[variable]=g[variable].div(value).fix(1);
-	},
-	pow(variable,value) {
-		g[variable]=g[variable].pow(value).fix(1);
-	},
-	root(variable,value) {
-		g[variable]=g[variable].root(value).fix(1);
-	}
+const o = {            // o = "操作"
+    add(variable,value) {
+        g[variable] = safeN(g[variable], 0).add(safeN(value, 0)).fix(0);
+    },
+    sub(variable,value) {
+        g[variable] = safeN(g[variable], 0).sub(safeN(value, 0)).fix(0);
+    },
+    mul(variable,value) {
+        g[variable] = safeN(g[variable], 1).mul(safeN(value, 1)).fix(1);
+    },
+    div(variable,value) {
+        g[variable] = safeN(g[variable], 1).div(safeN(value, 1)).fix(1);
+    },
+    pow(variable,value) {
+        g[variable] = safeN(g[variable], 1).pow(safeN(value, 1)).fix(1);
+    },
+    root(variable,value) {
+        g[variable] = safeN(g[variable], 1).root(safeN(value, 1)).fix(1);
+    }
 };
 const c = deepFreeze({		 // c = "constant"
 	...constant,

@@ -374,14 +374,14 @@ function updateHTML() {
 		if (StudyE(1)) openTab("wormhole");
 		d.display("div_stardust_disabledTop", g.topResourcesShown.stardust ? "none" : "inline-block");
 		d.display("br_stardust_disabledTop", g.topResourcesShown.stardust ? "none" : "inline-block");
-		if (!g.topResourcesShown.stardust) d.innerHTML("span_stardust_disabledTop", g.stardust.format());
+		if (!g.topResourcesShown.stardust && g.stardust && typeof g.stardust.format === 'function') d.innerHTML("span_stardust_disabledTop", g.stardust.format());
 		if (g.activeSubtabs.stardust === "stardustBoosts") {
 			for (let i = 1; i < 3 + g.stardustUpgrades[2]; i++) d.innerHTML("span_stardustBoost" + i + "Value", showFormulas ? showStardustBoostFormula[i]() : formatStardustBoost(i));
 			for (let i of [2, 3, 6, 8, 11]) d.innerHTML("span_stardustBoost" + i + "Tooltip", (stat["stardustBoost" + i].gte(c.d10) || showFormulas) ? "×" : "%");
-			d.innerHTML("span_stardustBoost4Tooltip", g.masteryPower.add(c.d1).pow(stat.stardustBoost4).format(2));
-			d.innerHTML("span_stardustBoost5Tooltip", stat.stardustBoost5.pow(g.XAxis).format(2));
-			d.innerHTML("span_stardustBoost7Tooltip", stat.stardustBoost7.pow(stardustBoost7Exp()).format(2));
-			d.innerHTML("span_stardustBoost7FakeExp", Decimal.log(stardustBoost7Exp(), g.truetimeThisStardustReset).fix(c.d0_5, false).noLeadFormat(4));
+			if (stat && stat.stardustBoost4 && typeof stat.stardustBoost4.format === 'function') d.innerHTML("span_stardustBoost4Tooltip", g.masteryPower.add(c.d1).pow(stat.stardustBoost4).format(2));
+			if (stat && stat.stardustBoost5 && typeof stat.stardustBoost5.format === 'function') d.innerHTML("span_stardustBoost5Tooltip", stat.stardustBoost5.pow(g.XAxis).format(2));
+			if (stat && stat.stardustBoost7 && typeof stat.stardustBoost7.format === 'function') d.innerHTML("span_stardustBoost7Tooltip", stat.stardustBoost7.pow(stardustBoost7Exp()).format(2));
+			if (g.truetimeThisStardustReset && typeof stardustBoost7Exp === 'function' && typeof Decimal.log === 'function' && typeof c.d0_5 !== 'undefined') d.innerHTML("span_stardustBoost7FakeExp", Decimal.log(stardustBoost7Exp(), g.truetimeThisStardustReset).fix(c.d0_5, false).noLeadFormat(4));
 			/* 星尘加成表格 */ for (let i = 3; i < 13; i++) d.display("div_stardustBoost" + i, ((g.stardustUpgrades[2] > (i - 3)) ? "inline-block" : "none"));
 			/* 星尘升级按钮 */
 			for (let i = 1; i < 6; i++) {
@@ -399,78 +399,108 @@ function updateHTML() {
 				for (let i of dynamicStars) { if (rowsShown.includes(Math.floor(i / 10))) { d.innerHTML("span_star" + i + "EffectLegacy", showFormulas ? formulaFormat(showStarEffectFormula(i)) : formatStarEffect(i)); } }
 			} else if (g.starContainerStyle === "Modern") {
 				if (selections.star === undefined) {
-					d.element("starInfo").style.visibility = "hidden";
+					if (d.element("starInfo")) d.element("starInfo").style.visibility = "hidden";
 				} else {
-					d.element("starInfo").style.visibility = "visible";
+					if (d.element("starInfo")) d.element("starInfo").style.visibility = "visible";
 					showStarInfo(selections.star);
 				}
 			} else {
 				g.starContainerStyle = "Modern";
 			}
-			for (let row = 1; row < 11; row++) {
-				d.tr("starRow" + row + g.starContainerStyle, rowsShown.includes(row));
-				d.innerHTML("span_row" + row + "StarsAvailable" + g.starContainerStyle, maxStars(row) - [1, 2, 3, 4].map(x => g.star[x + 10 * row] ? 1 : 0).sum());
-				for (let col = 1; col < 5; col++) {
-					let num = row * 10 + col;
-					let classname = g.star[num] ? undefined : availableStarRow(row) ? "available" : "locked";
-					d.class("button_star" + num + g.starContainerStyle, ["starbutton", "row" + row, classname, g.starContainerStyle.toLowerCase()].filter(x => (typeof x) === "string").join(" "));
-					if (g.starActivityShown) d.innerHTML("span_star" + num + "Active" + g.starContainerStyle, g.star[num] ? "激活" : "未激活");
-				}
-			}
-			d.innerHTML("span_unspentStars", unspentStars() + " / " + g.stars);
-			d.display("button_maxFullStarRows", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => maxStars(x)).includes(4) ? "inline-block" : "none");
-			d.innerHTML("span_nextStarRow", g.stars >= 40 ? "" : ("你购买的下一个星星将进入第 <span class=\"big _stars\">" + starRow(g.stars + 1) + "</span> 行"));
-		} else if (g.activeSubtabs.stardust === "darkMatter") {
-			d.display("div_darkMatterUnlocked", g.stardustUpgrades[4] === 0 ? "none" : "inline-block");
-			d.display("div_darkMatterLocked", g.stardustUpgrades[4] === 0 ? "inline-block" : "none");
-			if (g.stardustUpgrades[4] !== 0) {
-				for (let i of ["div", "br"]) d.display(i + "_darkmatter_disabledTop", g.topResourcesShown.darkmatter ? "none" : "inline-block");
-				if (!g.topResourcesShown.darkmatter) {
-					d.innerHTML("span_darkmatter_disabledTop", g.darkmatter.format());
-					d.innerHTML("span_darkmatterPerSec_disabledTop", stat.darkmatterPerSec.format(2));
-				}
-				d.innerHTML("span_affordableDarkAxis", axisCodes.slice(0, g.stardustUpgrades[0] + 4).map(x => maxAffordableDarkAxis(x).sub(g["dark" + x + "Axis"]).max(c.d0)).sumDecimals().format());
-				d.innerHTML("span_baseDarkMatterGain", calcStatUpTo("darkmatterPerSec", "Dark X Axis").noLeadFormat(2)); // 第一个非“基础”修饰符
-				d.innerHTML("span_darkMatterFreeAxis1", stat.darkMatterFreeAxis.gte(c.d1) ? "1" : stat.darkMatterFreeAxis.pow(c.d1).recip().noLeadFormat(3));
-				d.innerHTML("span_darkMatterFreeAxis2", stat.darkMatterFreeAxis.lte(c.d1) ? "1" : stat.darkMatterFreeAxis.max(c.d1).noLeadFormat(3));
-				d.class("button_darkstar", stat.totalDarkAxis.gte(stat.darkStarReq) ? "unlocked" : "locked");
-				let darkStarButtonText = (achievement.ownedInTier(5) < 7 ? "重置暗物质以获取 " : "获取 ") + ((stat.totalDarkAxis.gte(stat.darkStarReq) && g.darkstarBulk) ? (stat.maxAffordableDarkStars.sub(g.darkstars).format(0) + " 颗暗星") : "一颗暗星");
+		for (let row = 1; row < 11; row++) {
+    d.tr("starRow" + row + g.starContainerStyle, rowsShown.includes(row));
+    d.innerHTML("span_row" + row + "StarsAvailable" + g.starContainerStyle, maxStars(row) - [1, 2, 3, 4].map(x => g.star[x + 10 * row] ? 1 : 0).sum());
+    for (let col = 1; col < 5; col++) {
+        let num = row * 10 + col;
+        let classname = g.star[num] ? undefined : availableStarRow(row) ? "available" : "locked";
+        d.class("button_star" + num + g.starContainerStyle, ["starbutton", "row" + row, classname, g.starContainerStyle.toLowerCase()].filter(x => (typeof x) === "string").join(" "));
+        if (g.starActivityShown) d.innerHTML("span_star" + num + "Active" + g.starContainerStyle, g.star[num] ? "激活" : "未激活");
+    }
+}
+d.innerHTML("span_unspentStars", unspentStars() + " / " + g.stars);
+d.display("button_maxFullStarRows", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => maxStars(x)).includes(4) ? "inline-block" : "none");
+d.innerHTML("span_nextStarRow", g.stars >= 40 ? "" : ("你购买的下一个星星将进入第 <span class=\"big _stars\">" + starRow(g.stars + 1) + "</span> 行"));
+} else if (g.activeSubtabs.stardust === "darkMatter") {
+    d.display("div_darkMatterUnlocked", g.stardustUpgrades[4] === 0 ? "none" : "inline-block");
+    d.display("div_darkMatterLocked", g.stardustUpgrades[4] === 0 ? "inline-block" : "none");
+    if (g.stardustUpgrades[4] !== 0) {
+        for (let i of ["div", "br"]) d.display(i + "_darkmatter_disabledTop", g.topResourcesShown.darkmatter ? "none" : "inline-block");
+        if (!g.topResourcesShown.darkmatter) {
+            if (g.darkmatter && typeof g.darkmatter.format === 'function') d.innerHTML("span_darkmatter_disabledTop", g.darkmatter.format());
+            if (stat && stat.darkmatterPerSec && typeof stat.darkmatterPerSec.format === 'function') d.innerHTML("span_darkmatterPerSec_disabledTop", stat.darkmatterPerSec.format(2));
+        }
+        d.innerHTML("span_affordableDarkAxis", axisCodes.slice(0, g.stardustUpgrades[0] + 4).map(x => maxAffordableDarkAxis(x).sub(g["dark" + x + "Axis"]).max(c.d0)).sumDecimals().format());
+        
+        // --- 修改开始 ---
+        // 检查 calcStatUpTo 函数是否存在，以及 miscStats.darkmatterPerSec 是否已定义
+        if (typeof calcStatUpTo === 'function' && miscStats && miscStats["darkmatterPerSec"]) {
+            try {
+                let result = calcStatUpTo("darkmatterPerSec", "暗 X 轴");
+                if (result != null && typeof result.noLeadFormat === 'function') {
+                    d.innerHTML("span_baseDarkMatterGain", result.noLeadFormat(2));
+                } else {
+                    // 如果返回结果无效，显示 0 并打日志
+                    console.warn("calcStatUpTo 返回无效结果:", result);
+                    d.innerHTML("span_baseDarkMatterGain", "0");
+                }
+            } catch (error) {
+                // 捕获运行时错误，防止卡死
+                console.error("calcStatUpTo 调用失败:", error);
+                d.innerHTML("span_baseDarkMatterGain", "0");
+            }
+        } else {
+            // 条件不满足时的默认显示
+            // 打印调试信息，方便排查是哪个变量未定义
+            if (typeof calcStatUpTo !== 'function') console.warn("calcStatUpTo is not a function");
+            if (!miscStats) console.warn("miscStats is undefined");
+            if (miscStats && !miscStats["darkmatterPerSec"]) console.warn("miscStats.darkmatterPerSec is undefined");
+            
+            d.innerHTML("span_baseDarkMatterGain", "0");
+        }
+        // --- 修改结束 ---
+    
+				if (stat && stat.darkMatterFreeAxis) d.innerHTML("span_darkMatterFreeAxis1", stat.darkMatterFreeAxis.gte(c.d1) ? "1" : stat.darkMatterFreeAxis.pow(c.d1).recip().noLeadFormat(3));
+				if (stat && stat.darkMatterFreeAxis) d.innerHTML("span_darkMatterFreeAxis2", stat.darkMatterFreeAxis.lte(c.d1) ? "1" : stat.darkMatterFreeAxis.max(c.d1).noLeadFormat(3));
+				if (stat && stat.totalDarkAxis && typeof stat.darkStarReq !== 'undefined') d.class("button_darkstar", stat.totalDarkAxis.gte(stat.darkStarReq) ? "unlocked" : "locked");
+				let darkStarButtonText = (achievement && achievement.ownedInTier && achievement.ownedInTier(5) < 7 ? "重置暗物质以获取 " : "获取 ") + ((stat && stat.totalDarkAxis && typeof stat.darkStarReq !== 'undefined' && stat.totalDarkAxis.gte(stat.darkStarReq) && g.darkstarBulk) ? (stat.maxAffordableDarkStars.sub(g.darkstars).format(0) + " 颗暗星") : "一颗暗星");
 				if (showFormulas) darkStarButtonText += " (需要 " + darkStarReqFormula() + " 总暗轴)";
-				else darkStarButtonText += "<br>(进度" + (stat.totalDarkAxis.gte(stat.darkStarReq) ? "至下一个" : "") + "：" + stat.totalDarkAxis.format(0) + " / " + darkStarReq(g.darkstarBulk ? stat.maxAffordableDarkStars.max(g.darkstars) : g.darkstars).format(0) + " 暗轴)";
-				darkStarButtonText += "<br><br>" + darkStarEffectHTML();
+				else if (stat && stat.totalDarkAxis && typeof darkStarReq === 'function' && g.darkstars !== undefined) darkStarButtonText += "<br>(进度" + (stat.totalDarkAxis.gte(stat.darkStarReq) ? "至下一个" : "") + "：" + stat.totalDarkAxis.format(0) + " / " + darkStarReq(g.darkstarBulk ? stat.maxAffordableDarkStars.max(g.darkstars) : g.darkstars).format(0) + " 暗轴)";
+				darkStarButtonText += "<br><br>" + (typeof darkStarEffectHTML === 'function' ? darkStarEffectHTML() : "");
 				d.innerHTML("span_darkstars", BEformat(g.darkstars));
-				d.innerHTML("span_realDarkStars", Decimal.eq(g.darkstars, stat.realDarkStars) ? "" : ("实际：" + (Decimal.eq(g.darkstars, maxAffordableDarkStars()) ? stat.realDarkStars.noLeadFormat(3) : arrowJoin(stat.realDarkStars.noLeadFormat(3), calcStatWithDifferentBase("realDarkStars", maxAffordableDarkStars()).noLeadFormat(3)))));
+				if (g.darkstars !== undefined && typeof Decimal !== 'undefined' && Decimal.eq && stat && stat.realDarkStars) d.innerHTML("span_realDarkStars", Decimal.eq(g.darkstars, stat.realDarkStars) ? "" : ("实际：" + (Decimal.eq(g.darkstars, maxAffordableDarkStars()) ? stat.realDarkStars.noLeadFormat(3) : arrowJoin(stat.realDarkStars.noLeadFormat(3), calcStatWithDifferentBase("realDarkStars", maxAffordableDarkStars()).noLeadFormat(3)))));
 				d.innerHTML("span_darkStarMainText", darkStarButtonText);
 				for (let i = 0; i < 12; i++) {
 					let type = axisCodes[i];
 					d.display("button_dark" + type + "Axis", (4 + g.stardustUpgrades[0] > i) ? "inline-block" : "none");
 					if (4 + g.stardustUpgrades[0] > i) {
-						d.class("button_dark" + type + "Axis", "axisbutton " + (corruption.list.darkAxis.isCorrupted(type) ? "corrupted" : g.darkmatter.gt(stat["dark" + type + "AxisCost"]) ? "dark" : "locked"));
-						d.innerHTML("span_dark" + type + "AxisAmount", BEformat(g["dark" + type + "Axis"]) + ((stat["freedark" + type + "Axis"].gt(c.d0)) ? (" + " + stat["freedark" + type + "Axis"].noLeadFormat(2)) : "") + (Decimal.neq(Decimal.add(g["dark" + type + "Axis"], stat["freedark" + type + "Axis"]), stat["realdark" + type + "Axis"]) ? (" → " + stat["realdark" + type + "Axis"].noLeadFormat(2)) : ""));
-						d.innerHTML("span_dark" + type + "AxisEffect", stat["dark" + type + "AxisEffect"][miscStats["dark" + type + "AxisEffect"].from1 ? "formatFrom1" : "noLeadFormat"](miscStats["dark" + type + "AxisEffect"].precision));
-						d.innerHTML("span_dark" + type + "AxisCost", darkAxisCost(type, g["dark" + type + "Axis"], true).format());
+						let corruptedClass = typeof corruption !== 'undefined' && corruption && typeof corruption.list === 'object' && corruption.list.darkAxis && typeof corruption.list.darkAxis.isCorrupted === 'function' && corruption.list.darkAxis.isCorrupted(type) ? "corrupted" : g.darkmatter && typeof g.darkmatter.gt === 'function' && g.darkmatter.gt(stat["dark" + type + "AxisCost"]) ? "dark" : "locked";
+						d.class("button_dark" + type + "Axis", "axisbutton " + corruptedClass);
+						d.innerHTML("span_dark" + type + "AxisAmount", BEformat(g["dark" + type + "Axis"]) + ((stat["freedark" + type + "Axis"] && stat["freedark" + type + "Axis"].gt(c.d0)) ? (" + " + stat["freedark" + type + "Axis"].noLeadFormat(2)) : "") + (typeof Decimal !== 'undefined' && Decimal.neq && Decimal.add && stat["realdark" + type + "Axis"] && Decimal.neq(Decimal.add(g["dark" + type + "Axis"], stat["freedark" + type + "Axis"]), stat["realdark" + type + "Axis"]) ? (" → " + stat["realdark" + type + "Axis"].noLeadFormat(2)) : ""));
+						d.innerHTML("span_dark" + type + "AxisEffect", stat["dark" + type + "AxisEffect"] && miscStats && miscStats["dark" + type + "AxisEffect"] && miscStats["dark" + type + "AxisEffect"].from1 ? stat["dark" + type + "AxisEffect"].formatFrom1(miscStats["dark" + type + "AxisEffect"].precision) : (stat["dark" + type + "AxisEffect"] ? stat["dark" + type + "AxisEffect"].noLeadFormat(miscStats["dark" + type + "AxisEffect"] ? miscStats["dark" + type + "AxisEffect"].precision : 2) : "1"));
+						d.innerHTML("span_dark" + type + "AxisCost", darkAxisCost && typeof darkAxisCost === 'function' ? darkAxisCost(type, g["dark" + type + "Axis"], true).format() : "?");
 					}
-					let v1 = stat.realDarkStars;
-					let v2 = calcStatWithDifferentBase("realDarkStars", stat.maxAffordableDarkStars.max(g.darkstars.add(c.d1)));
-					let dsMult = ((axisCodes.indexOf(type) > 7) ? c.d5 : c.d10);
-					d.innerHTML("span_darkStarEffect2" + type, showFormulas ? darkStarEffect2LevelFormula(type) : (Decimal.eq(darkStarEffect2Level(type, v1), darkStarEffect2Level(type, v2)) ? (darkStarEffect2Level(type, v1).mul(dsMult).noLeadFormat(4) + "%") : arrowJoin(darkStarEffect2Level(type, v1).mul(dsMult).noLeadFormat(4) + "%", +darkStarEffect2Level(type, v2).mul(dsMult).noLeadFormat(4) + "%")));
+					let v1 = stat && stat.realDarkStars ? stat.realDarkStars : c.d0;
+					let v2 = typeof calcStatWithDifferentBase === 'function' ? calcStatWithDifferentBase("realDarkStars", stat && stat.maxAffordableDarkStars ? stat.maxAffordableDarkStars.max(g.darkstars && g.darkstars.add ? g.darkstars.add(c.d1) : c.d0) : c.d0) : c.d0;
+					let dsMult = ((axisCodes.indexOf(type) > 7) ? (c && c.d5 ? c.d5 : 5) : (c && c.d10 ? c.d10 : 10));
+					d.innerHTML("span_darkStarEffect2" + type, showFormulas ? (typeof darkStarEffect2LevelFormula === 'function' ? darkStarEffect2LevelFormula(type) : "") : (typeof darkStarEffect2Level === 'function' && typeof v1 !== 'undefined' && typeof v2 !== 'undefined' && darkStarEffect2Level(type, v1) && darkStarEffect2Level(type, v2) ? (Decimal.eq && darkStarEffect2Level(type, v1) && darkStarEffect2Level(type, v2) && Decimal.eq(darkStarEffect2Level(type, v1), darkStarEffect2Level(type, v2)) ? (darkStarEffect2Level(type, v1).mul(dsMult).noLeadFormat(4) + "%") : (typeof arrowJoin === 'function' ? arrowJoin(darkStarEffect2Level(type, v1).mul(dsMult).noLeadFormat(4) + "%", darkStarEffect2Level(type, v2).mul(dsMult).noLeadFormat(4) + "%") : "")) : ""));
 				}
-				d.innerHTML("span_darkUAxisEffectAlt", stat.darkUAxisEffect.pow(stat.totalDarkAxis).format(3));
-				for (let name of empowerableAxis.dark) {
-					d.display("button_empoweredDark" + name + "Axis", stat["empoweredDark" + name + "Axis"].gt(c.d0) ? "inline-block" : "none");
-					d.innerHTML("span_empoweredDark" + name + "AxisAmount", BEformat(stat["empoweredDark" + name + "Axis"], 2));
+				if (stat && stat.darkUAxisEffect) d.innerHTML("span_darkUAxisEffectAlt", stat.darkUAxisEffect.pow(stat.totalDarkAxis).format(3));
+				if (empowerableAxis && empowerableAxis.dark) for (let name of empowerableAxis.dark) {
+					d.display("button_empoweredDark" + name + "Axis", stat["empoweredDark" + name + "Axis"] && typeof stat["empoweredDark" + name + "Axis"].gt === 'function' && stat["empoweredDark" + name + "Axis"].gt(c.d0) ? "inline-block" : "none");
+					d.innerHTML("span_empoweredDark" + name + "AxisAmount", stat["empoweredDark" + name + "Axis"] ? BEformat(stat["empoweredDark" + name + "Axis"], 2) : "0");
 				}
-				if (StudyE(12) || study13.bound(275)) {
+				if (StudyE(12) || (study13 && typeof study13.bound === 'function' && study13.bound(275))) {
 					d.display("div_titaniumEmpowerments", "inline-block");
-					d.innerHTML("span_titaniumEmpowerments", g.study12.empowerments.format());
-					d.innerHTML("span_fortitude", g.study12.fortitude.noLeadFormat(3));
-					d.innerHTML("span_fortitudeEffect", studies[12].sc().noLeadFormat(2));
-					let next = Decimal.max(studies[12].empowerment.affordable(), g.study12.empowerments.add(c.d1));
-					d.innerHTML("span_maxFortitude", arrowJoin(textFormat(studies[12].fortitude.max().noLeadFormat(3), "_titanium"), textFormat(studies[12].fortitude.max(next).noLeadFormat(3), "_titanium")));
-					d.innerHTML("span_maxFortitudeGain", arrowJoin(textFormat(studies[12].fortitude.gain().noLeadFormat(3), "_titanium"), textFormat(studies[12].fortitude.gain(next).noLeadFormat(3), "_titanium")));
-					d.class("button_titaniumEmpowerment", Decimal.gte(g.exoticmatter, studies[12].empowerment.req()) ? "unlocked" : "locked");
-					let affordable = studies[12].empowerment.affordable().sub(g.study12.empowerments);
-					d.innerHTML("button_titaniumEmpowerment", "获取 " + (affordable.gt(c.d0) ? affordable.format() : "一") + " 个钛强化" + (affordable.gt(c.d1) ? "" : "") + "<br>(需要 " + studies[12].empowerment.req(studies[12].empowerment.affordable()).format() + " 奇异物质" + (affordable.eq(c.d0) ? "" : " 用于下一个") + ")");
+					if (g.study12 && g.study12.empowerments) d.innerHTML("span_titaniumEmpowerments", g.study12.empowerments.format());
+					if (g.study12 && g.study12.fortitude) d.innerHTML("span_fortitude", g.study12.fortitude.noLeadFormat(3));
+					if (studies && studies[12] && studies[12].sc) d.innerHTML("span_fortitudeEffect", studies[12].sc().noLeadFormat(2));
+					let next = typeof studies !== 'undefined' && studies[12] && studies[12].empowerment && typeof studies[12].empowerment.affordable === 'function' ? Decimal.max(studies[12].empowerment.affordable(), g.study12.empowerments.add(c.d1)) : c.d0;
+					if (g.study12 && g.study12.empowerments && studies && studies[12] && studies[12].fortitude) d.innerHTML("span_maxFortitude", arrowJoin(textFormat(studies[12].fortitude.max().noLeadFormat(3), "_titanium"), textFormat(studies[12].fortitude.max(next).noLeadFormat(3), "_titanium")));
+					if (g.study12 && g.study12.empowerments && studies && studies[12] && studies[12].fortitude) d.innerHTML("span_maxFortitudeGain", arrowJoin(textFormat(studies[12].fortitude.gain().noLeadFormat(3), "_titanium"), textFormat(studies[12].fortitude.gain(next).noLeadFormat(3), "_titanium")));
+					if (g.exoticmatter && studies && studies[12] && studies[12].empowerment && typeof studies[12].empowerment.req === 'function') d.class("button_titaniumEmpowerment", Decimal.gte(g.exoticmatter, studies[12].empowerment.req()) ? "unlocked" : "locked");
+					let affordable = studies && studies[12] && studies[12].empowerment && typeof studies[12].empowerment.affordable === 'function' ? studies[12].empowerment.affordable().sub(g.study12.empowerments) : c.d0;
+					let buttonText = "获取 " + (affordable.gt(c.d0) ? affordable.format() : "一") + " 个钛强化" + (affordable.gt(c.d1) ? "" : "") + "<br>(需要 " + (studies && studies[12] && studies[12].empowerment && typeof studies[12].empowerment.req === 'function' ? studies[12].empowerment.req(studies[12].empowerment.affordable()).format() : "?") + " 奇异物质" + (affordable.eq(c.d0) ? "" : " 用于下一个") + ")";
+					d.innerHTML("button_titaniumEmpowerment", buttonText);
 				} else {
 					d.display("div_titaniumEmpowerments", "none");
 				}
@@ -480,15 +510,15 @@ function updateHTML() {
 				let type = energyTypes[i];
 				if (energyTypesUnlocked() > i) {
 					d.display(type + "EnergyDiv", "inline-block");
-					d.innerHTML(type + "EnergyAmount", g[type + "Energy"].formatFrom1(2));
-					d.innerHTML(type + "EnergyPerSec", energyPerSec(i).formatFrom1(2));
-					d.innerHTML(type + "EnergyEffect", energyEffect(i).noLeadFormat(4));
-					if (i < 6) { d.display("span_" + type + "EnergyResetLayer", g.studyCompletions[3] > 0 ? "inline-block" : "none"); }
+					if (g[type + "Energy"] && typeof g[type + "Energy"].formatFrom1 === 'function') d.innerHTML(type + "EnergyAmount", g[type + "Energy"].formatFrom1(2));
+					if (typeof energyPerSec === 'function') d.innerHTML(type + "EnergyPerSec", energyPerSec(i).formatFrom1(2));
+					if (typeof energyEffect === 'function') d.innerHTML(type + "EnergyEffect", energyEffect(i).noLeadFormat(4));
+					if (i < 6 && g.studyCompletions) { d.display("span_" + type + "EnergyResetLayer", g.studyCompletions[3] > 0 ? "inline-block" : "none"); }
 				} else {
 					d.display(type + "EnergyDiv", "none");
 				}
 			}
-			d.display("div_energyLocked", energyTypesUnlocked() === 0 ? "inline-block" : "none");
+			d.display("div_energyLocked", typeof energyTypesUnlocked === 'function' && energyTypesUnlocked() === 0 ? "inline-block" : "none");
 		}
 	}
 	if (g.activeTab === "automation") {

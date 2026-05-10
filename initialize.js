@@ -1,165 +1,36 @@
-"use strict"
-;
-var
- gameloop
-var
- fineGrainLoop
-var
- savePreLoad
+"use strict";
+var gameloop
+var fineGrainLoop
+var savePreLoad
 /* 这对于加载动画更新是必要的。*/
-const
- initSteps = [
-	{
-function:function(
-){
-		// 从本地存储获取存档字符串
-		const saveStr = localStorage.getItem("save"
-);
-		savePreLoad = saveStr || 
-""
-;
+const initSteps = [
+	{function:function(){
+		// 直接获取存档字符串
+		const saveStr = localStorage.getItem("save");
+		savePreLoad = saveStr || "";
 	}},
-	{
-function:function(
-){
-		// 在加载界面直接显示存档字符串
-		d.
-element("loadScreenExport").innerText
- = savePreLoad;
+	{function:function(){
+		// 直接显示存档字符串
+		d.element("loadScreenExport").innerText = savePreLoad;
 	}},
-	{
-function:function(){if
-(debugActive){
-		for(let id of Object.keys(research)){validateResearch
-(id)}
-		for(let stat of Object.keys(miscStats).filter(x=>miscStats[x].type==="breakdown")){for(let i=0;i<miscStats[stat].modifiers.length;i++){if(typeof miscStats[stat].modifiers[i].show!=="function"){error("miscStats."+stat+".modifiers["+i+"].show 未定义"
-)}}}
+	{function:function(){if(debugActive){
+		for(let id of Object.keys(research)){validateResearch(id)}
+		for(let stat of Object.keys(miscStats).filter(x=>miscStats[x].type==="breakdown")){for(let i=0;i<miscStats[stat].modifiers.length;i++){if(typeof miscStats[stat].modifiers[i].show!=="function"){error("miscStats."+stat+".modifiers["+i+"].show 未定义")}}}
 	}}},
-	{
-function:function(
-){
-		try
- {
-			const saveStr = localStorage.getItem("save"
-);
-			if
- (saveStr) {
-				// 直接解析JSON，不再进行任何编码/解码
-				const parsedData = JSON.parse
-(saveStr);
-				load
-(parsedData);
-			} 
-else
- {
-				load(null
-);
+	{function:function(){
+		try {
+			// 获取存档字符串
+			const saveStr = localStorage.getItem("save");
+			if (saveStr) {
+				// 传递字符串给 load 函数，让它自己处理解码
+				load(saveStr);
+			} else {
+				// 如果没有存档，创建新游戏
+				newGame();
 			}
-		} 
-catch
- (e) {
-			console.error("加载保存数据失败:"
-, e);
-			// 创建新游戏
-			newGame
-();
-		}
-	}},
-	{
-function:function(
-){
-		// 在加载界面显示存档字符串（原样显示）
-		d.
-element("loadScreenExport").innerText
- = savePreLoad;
-	}},
-	{
-function:function(){if
-(debugActive){
-		for(let id of Object.keys(research)){validateResearch
-(id)}
-		for(let stat of Object.keys(miscStats).filter(x=>miscStats[x].type==="breakdown")){for(let i=0;i<miscStats[stat].modifiers.length;i++){if(typeof miscStats[stat].modifiers[i].show!=="function"){error("miscStats."+stat+".modifiers["+i+"].show 未定义"
-)}}}
-	}}},
-	{
-function:function(
-){
-		try
- {
-			const saveStr = localStorage.getItem("save"
-);
-			if
- (saveStr) {
-				let parsedData = null
-;
-				
-				// 方法1: 先尝试URI解码的base64 (这是保存时使用的格式)
-				try
- {
-					const decoded = decodeURIComponent(atob
-(saveStr));
-					parsedData = 
-JSON.parse
-(decoded);
-					console.log("存档格式: URI编码的base64"
-);
-				} 
-catch
- (e1) {
-					// 方法2: 尝试普通base64解码
-					try
- {
-						const decoded = atob
-(saveStr);
-						parsedData = 
-JSON.parse
-(decoded);
-						console.log("存档格式: 普通base64"
-);
-					} 
-catch
- (e2) {
-						// 方法3: 尝试直接解析JSON
-						try
- {
-							parsedData = 
-JSON.parse
-(saveStr);
-							console.log("存档格式: 原始JSON"
-);
-						} 
-catch
- (e3) {
-							throw new Error("无法解析存档: " + e3.message
-);
-						}
-					}
-				}
-				
-				if
- (parsedData) {
-					load
-(parsedData);
-				} 
-else
- {
-					throw new Error("存档解析失败"
-);
-				}
-			} 
-else
- {
-				load(null
-);
-			}
-		} 
-catch
- (e) {
-			console.error("加载保存数据失败:"
-, e);
-			// 创建新游戏
-			newGame
-();
+		} catch (e) {
+			console.error("加载存档失败:", e);
+			newGame();
 		}
 	}},
 	{function:function(){HTMLGenerator()}},

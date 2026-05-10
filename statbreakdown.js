@@ -4491,16 +4491,56 @@ function toggleActiveBreakdownTab(x){
 }
 var breakdownTabList = Object.entries(miscStats).sort(function(a,b){return a[1].label>b[1].label;}).map(x => x[0]);
 
-function calcStatUpTo(id,label) {
-	let data = miscStats[id]
-	if (data.type==="breakdown") {
-		let value = data.modifiers[0].func()
-		for (let i of data.modifiers) {
-			if (i.label===label) return value
-			value = i.func(value)
-		}
-	}
-	functionError("callStatUpTo")
+function calcStatUpTo(id, label) {
+    // 安全检查：确保所有必要的参数都存在
+    if (!id || !label || !miscStats || !miscStats[id]) {
+        // 不调用 functionError，直接返回默认值
+        console.warn(`calcStatUpTo: 参数缺失或 miscStats[${id}] 不存在`);
+        return new Decimal(0);
+    }
+    
+    let data = miscStats[id];
+    if (data.type === "breakdown") {
+        try {
+            // 额外的安全检查
+            if (!data.modifiers || data.modifiers.length === 0) {
+                console.warn(`calcStatUpTo: miscStats[${id}].modifiers 为空`);
+                return new Decimal(0);
+            }
+            
+            // 检查第一个修饰符的函数
+            if (typeof data.modifiers[0].func !== 'function') {
+                console.warn(`calcStatUpTo: miscStats[${id}].modifiers[0].func 不是函数`);
+                return new Decimal(0);
+            }
+            
+            let value = data.modifiers[0].func();
+            
+            for (let i of data.modifiers) {
+                if (i.label === label) {
+                    return value;
+                }
+                // 检查 func 是否存在
+                if (i.func && typeof i.func === 'function') {
+                    value = i.func(value);
+                } else {
+                    console.warn(`calcStatUpTo: 修饰符 ${i.label} 没有 func 函数`);
+                }
+            }
+            
+            // 如果遍历完都没找到 label
+            console.warn(`calcStatUpTo: 在 ${id} 中未找到标签 "${label}"`);
+            return new Decimal(0);
+            
+        } catch (error) {
+            console.error(`calcStatUpTo: 计算 ${id} 时出错`, error);
+            return new Decimal(0);
+        }
+    }
+    
+    // 不调用 functionError，直接返回默认值
+    console.warn(`calcStatUpTo: ${id} 的类型不是 "breakdown"`);
+    return new Decimal(0);
 }
 function calcStatWithDifferentBase(id,base) {
 	let data = miscStats[id]

@@ -3367,10 +3367,32 @@ const topResources = [
 		text: function () { return "<span class=\"_stardust\">" + g.stardust.format() + "</span> 星尘"; },
 		condition: function () { return g.topResourcesShown.stardust && unlocked("Stardust"); }
 	},
-	{
-		text: function () { return g.stardustUpgrades[4] > 0 ? ("<span class=\"_darkmatter\">" + g.darkmatter.format() + "</span> 暗物质" + ((g.darkmatter.lt(c.ee9) || g.darkmatter.gt_tolerance(stat.darkmatterPerSec, 1e-4)) ? (" (<span class=\"_darkmatter\">" + stat.darkmatterPerSec.format(2) + "</span> / 秒)") : "")) : ""; },
-		condition: function () { return g.topResourcesShown.darkmatter && unlocked("Dark Matter"); }
-	},
+{
+    text: function () { 
+        try {
+            if (g.stardustUpgrades[4] > 0 && g.darkmatter && typeof g.darkmatter.format === 'function') {
+                let darkMatterText = "<span class=\"_darkmatter\">" + g.darkmatter.format() + "</span> 暗物质";
+                
+                if (stat && stat.darkmatterPerSec && typeof stat.darkmatterPerSec.format === 'function') {
+                    if (g.darkmatter.lt(c.ee9) || (typeof g.darkmatter.gt_tolerance === 'function' && g.darkmatter.gt_tolerance(stat.darkmatterPerSec, 1e-4))) {
+                        darkMatterText += " (<span class=\"_darkmatter\">" + stat.darkmatterPerSec.format(2) + "</span> / 秒)";
+                    }
+                }
+                return darkMatterText;
+            }
+        } catch (e) {
+            console.warn("暗物质显示错误:", e);
+        }
+        return "";
+    },
+    condition: function () { 
+        try {
+            return g.topResourcesShown.darkmatter && unlocked("Dark Matter");
+        } catch (e) {
+            return false;
+        }
+    }
+},
 	{
 		text: function () { return "<span class=\"_wormhole\">" + g.hawkingradiation.format() + "</span> 霍金辐射"; },
 		condition: function () { return g.topResourcesShown.hr && unlocked("Hawking Radiation"); }
@@ -3710,6 +3732,7 @@ function progressBarOnClick() {
 }
 
 function save() {
+	// 直接保存为JSON字符串，不加密
 	localStorage.setItem("save", JSON.stringify(g));
 }
 
@@ -3744,6 +3767,38 @@ function getSavedGame(saved, game, base = basesave) {
 }
 
 function load(savegame) {
+	// 如果传入的是字符串，可能是存档字符串
+	if (typeof savegame === "string") {
+		try {
+			// 先尝试直接解析JSON
+			savegame = JSON.parse(savegame);
+		} catch (e1) {
+			try {
+				console.log("尝试Base64解码存档...");
+				// 如果是旧的base64格式存档
+				const decoded = atob(savegame);
+				savegame = JSON.parse(decoded);
+				console.log("Base64解码成功");
+			} catch (e2) {
+				try {
+					// 尝试处理可能有URI编码的情况
+					const decoded = decodeURIComponent(atob(savegame));
+					savegame = JSON.parse(decoded);
+					console.log("Base64+URI解码成功");
+				} catch (e3) {
+					// 如果所有方法都失败，创建新游戏
+					console.warn("存档格式无法识别，创建新游戏。错误:", e1.message, e2.message, e3.message);
+					newGame();
+					return;
+				}
+			}
+		}
+	} else if (savegame === null || savegame === undefined) {
+		// 如果传入的是null或undefined，创建新游戏
+		newGame();
+		return;
+	}
+	
 	if ((typeof savegame === "object") && (savegame !== null)) {
 		// 加载游戏
 		g = decimalStructuredClone(basesave);
@@ -3768,14 +3823,19 @@ function load(savegame) {
 		for (let i = 0; i < 9; i++) g.chroma[i] = N(g.chroma[i]).fix(c.d0);
 		g.TotalStardustResets = Math.max(g.StardustResets, g.TotalStardustResets);
 		g.TotalWormholeResets = Math.max(g.WormholeResets, g.TotalWormholeResets);
-		if (((typeof g.version) !== "number") && (g.EMDLevelDisplayInFooter === 0)) { g.version = 1; g.EMDLevelDisplayInFooter = 1; } // 默认设为“仅等级”
+		if (((typeof g.version) !== "number") && (g.EMDLevelDisplayInFooter === 0)) { g.version = 1; g.EMDLevelDisplayInFooter = 1; } // 默认设为"仅等级"
 		// 存档修复
 		if (typeof g.galaxies !== "number") g.galaxies = 0; // < 1.3.2
 		// 初始化
 		olddelta = Date.now();
 		g.dilatedTime += (olddelta - g.timeLeft) / 1000;
 		updateOverclockScrollbar();
+	} else {
+		// 如果存档格式不正确，创建新游戏
+		console.warn("存档格式不正确，创建新游戏");
+		newGame();
 	}
+	
 	let date = new Date().getUTCFullYear() * 10000 + new Date().getUTCMonth() * 100 + new Date().getUTCDate();
 	savecounter++;
 }
@@ -3862,7 +3922,8 @@ function processPromo(str) {
 }
 
 function exportSave() {
-	openExport(btoa(encodeURIComponent(localStorage.getItem("save"))));
+	// 直接传递未加密的存档字符串
+	openExport(localStorage.getItem("save"));
 }
 
 const wipeSavePassword = Array.random(["史莱克是爱，史莱克是生命", "要确认你想清除存档，请输入。", "foo", "是", "yes", "96", "g.exoticmatter++", "alemaninc，这是最糟糕的主意。", "这是史上最烂的游戏。", "M > O > U", "44031", "X > Y > Z", "存档选择器", "这是随机生成的短语", "玛雅嘻玛雅呼", "清除存档", "请不要删除我", "确认", "康菲姆", "克隆菲姆", "斯塔特马克", "泽恩诺罗尼", "反物质维度更好。", "难以置信的慢启动", "惊讶竟然没有什么能加速这个过程", "alemaninc 令人印象深刻地每周多次将破损代码部署到生产环境"]);
