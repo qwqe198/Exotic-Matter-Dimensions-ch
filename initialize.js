@@ -36,7 +36,7 @@ const initSteps = [
 	{function:function(){HTMLGenerator()}},
 	{function:function(){
 		d.innerHTML("span_currentVersion",version.current+(betaActive?(" "+version.percentage()):""))
-		document.title="奇异物质维度 "+version.current+" 作者：alemaninc"
+		document.title="奇异物质维度 "+version.current+" 作者：alemaninc，汉化：qwqe198（qq2960729702）"
 	}},
 	{function:function(){updateYellowLightCache();},onImport:true},
 	{function:function(){for (let i=0;i<2;i++) study13.updateRewardLevels()},onImport:true},
