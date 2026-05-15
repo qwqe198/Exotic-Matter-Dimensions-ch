@@ -346,6 +346,7 @@ var overclockSpeedupFactor = 1;
 var secretAchievementPoints = 0;
 var savecounter = 0;
 var olddelta = Date.now();
+var lastAutosaveTime = Date.now();
 
 var axisAutobuyerProgress = 0;
 var wormholeAnimationActive = false;
@@ -3462,9 +3463,9 @@ function updateTopResourceModal() {
 	}
 }
 
-function showConfigModal(label, buttons) {
+function showConfigModal(label, buttons, configKey) {
 	popup({
-		text: "<span style=\"text-decoration:underline\">以下是 " + label + " 的选项列表：</span><br>" + buttons.filter(x => x.visible ?? true).map(x => "<button class=\"genericbutton size2\" onClick=\"" + x.onClick + ";openConfig['" + label + "']()\">" + x.text + "</button>").join("") + "<br>",
+		text: "<span style=\"text-decoration:underline\">以下是 " + label + " 的选项列表：</span><br>" + buttons.filter(x => x.visible ?? true).map(x => "<button class=\"genericbutton size2\" onClick=\"" + x.onClick + ";openConfig['" + configKey + "']()\">" + x.text + "</button>").join("") + "<br>",
 		buttons: [["关闭", ""]]
 	});
 }
@@ -3475,7 +3476,7 @@ const openConfig = (() => {
 		"Axis": function () { showConfigModal("轴", [ // Axis
 			{ text: "奇异物质数量显示在 " + (g.topResourcesShown.exoticmatter ? "屏幕顶部" : "轴子标签页"), onClick: toggle("g.topResourcesShown.exoticmatter") },
 			{ text: (g.glowOptions.buyAxis ? "显" : "不显") + "示可购买轴的发光效果", onClick: toggle("g.glowOptions.buyAxis") }
-		]); },
+		], "Axis"); },
 		"Mastery": function () { updateMasteryLayout(); showConfigModal("精通", [ // Mastery
 			{ text: "精通力数量显示在 " + (g.topResourcesShown.masteryPower ? "屏幕顶部" : "精通子标签页"), onClick: toggle("g.topResourcesShown.masteryPower") },
 			{ text: "精通标签布局: " + g.masteryContainerStyle, onClick: "g.masteryContainerStyle=(g.masteryContainerStyle==='Modern'?'Legacy':'Modern')" },
@@ -3483,73 +3484,73 @@ const openConfig = (() => {
 			{ text: (g.masteryBoostsShown ? "显" : "隐") + "示精通加成百分比", onClick: "toggle('masteryBoostsShown')" },
 			{ text: (g.masteryActivityShown ? "显" : "隐") + "示精通激活状态", onClick: "toggle('masteryActivityShown')" },
 			{ text: "精通行顺序 " + (g.masteryRowsReversed ? "" : "未") + "反转", onClick: "toggle('masteryRowsReversed');d.innerHTML('masteryContainerLegacy',masteryTableLegacy());d.innerHTML('masteryContainerModern',masteryTableModern())" }
-		]); },
+		], "Mastery"); },
 		"Offline Time": function () { showConfigModal("离线时间", [ // Offline Time
 			{ text: (g.glowOptions.overclock ? "显" : "不显") + "示超频期间的发光效果", onClick: toggle("g.glowOptions.overclock") }
-		]); },
+		], "Offline Time"); },
 		"Achievement": function () { updateAchievementsTab(); showConfigModal("成就", [ // Achievement
 			{ text: "成就 ID " + (g.achievementIDShown ? "" : "不") + "显示", onClick: "toggle('achievementIDShown');for (let i of achievement.all){d.display('span_ach'+i+'ID',g.achievementIDShown?'inline-block':'none')}" },
 			{ text: (g.completedAchievementTiersShown ? "显" : "隐") + "示已完成的成就层级", onClick: "toggle('completedAchievementTiersShown')" },
 			{ text: "成就层级顺序 " + (g.achievementTiersReversed ? "" : "未") + "反转", onClick: "toggle('achievementTiersReversed');d.innerHTML('achievementContainer',achievementContainer());", visible: unlocked("Stardust") }
-		]); },
+		], "Achievement"); },
 		"Stardust Boost": function () { showConfigModal("星尘加成", [ // Stardust Boost
 			{ text: "星尘数量显示在 " + (g.topResourcesShown.stardust ? "屏幕顶部" : "星尘标签页"), onClick: toggle("g.topResourcesShown.stardust") },
 			{ text: "星尘重置确认 " + (g.confirmations.stardustReset ? "启" : "禁") + "用", onClick: toggle("g.confirmations.stardustReset") },
 			{ text: "钢铁意志下星尘重置确认 " + (g.confirmations.ironWillStardustReset ? "启" : "禁") + "用", onClick: toggle("g.confirmations.ironWillStardustReset"), visible: g.achievement[502] },
 			{ text: (g.glowOptions.buyStardustUpgrade ? "显" : "不显") + "示可购买星尘升级的发光效果", onClick: toggle("g.glowOptions.buyStardustUpgrade") },
 			{ text: (g.showingCappedStardustUpgrades ? "显" : "隐") + "示已达上限的星尘升级", onClick: "toggle('showingCappedStardustUpgrades')" }
-		]); },
+		], "Stardust Boost"); },
 		"Star": function () { updateStarLayout(); showConfigModal("星星", [ // Star
 			{ text: "星星标签布局: " + g.starContainerStyle, onClick: "g.starContainerStyle=(g.starContainerStyle==='Modern'?'Legacy':'Modern')" },
 			{ text: (g.glowOptions.buyStar ? "显" : "不显") + "示可购买星星的发光效果", onClick: toggle("g.glowOptions.buyStar") },
 			{ text: (g.glowOptions.assignStar ? "显" : "不显") + "示可分配星星的发光效果", onClick: toggle("g.glowOptions.assignStar") }
-		]); },
+		], "Star"); },
 		"Dark Matter": function () { showConfigModal("暗物质", [ // Dark Matter
 			{ text: "暗物质数量显示在 " + (g.topResourcesShown.darkmatter ? "屏幕顶部" : "暗物质子标签页"), onClick: toggle("g.topResourcesShown.darkmatter") },
 			{ text: (g.glowOptions.buyDarkAxis ? "显" : "不显") + "示可购买暗轴的发光效果", onClick: toggle("g.glowOptions.buyDarkAxis") },
 			{ text: (g.glowOptions.buyDarkStar ? "显" : "不显") + "示可获得暗星的发光效果", onClick: toggle("g.glowOptions.buyDarkStar") },
 			{ text: "暗星批量购买 " + (g.darkstarBulk ? "启" : "禁") + "用", onClick: "toggle('darkstarBulk')" },
 			{ text: (g.glowOptions.study12 ? "显" : "不显") + "示可获得钛强化效果的发光效果", onClick: toggle("g.glowOptions.study12"), visible: visibleStudies().includes(12) || unlocked("Matrix") }
-		]); },
+		], "Dark Matter"); },
 		"Research": function () { showConfigModal("研究", [ // Research
 			{ text: "霍金辐射数量显示在 " + (g.topResourcesShown.hr ? "屏幕顶部" : "虫洞标签页"), onClick: toggle("g.topResourcesShown.hr") },
 			{ text: "虫洞重置确认 " + (g.confirmations.wormholeReset ? "启" : "禁") + "用", onClick: toggle("g.confirmations.wormholeReset") },
 			{ text: "单独按钮购买研究 " + (g.confirmations.researchDoubleClick ? "启" : "禁") + "用", onClick: toggle("g.confirmations.researchDoubleClick") },
 			{ text: (g.glowOptions.observe ? "显" : "不显") + "示可观测的发光效果", onClick: toggle("g.glowOptions.observe") },
 			{ text: (g.glowOptions.buyPermanentResearch ? "显" : "不显") + "示可购买永久研究的发光效果", onClick: toggle("g.glowOptions.buyPermanentResearch"), visible: (g.studyCompletions[1] + g.studyCompletions[2]) > 5 }
-		]); },
+		], "Research"); },
 		"Study": function () { showConfigModal("研究（Studies）", [ // Study
 			{ text: "研究容器样式: " + g.studyContainerStyle, onClick: "g.studyContainerStyle=(g.studyContainerStyle==='Compact')?'Detailed':'Compact'" },
 			{ text: (g.completedStudiesShown ? "显" : "隐") + "示已达最大完成次数的研究", onClick: "toggle('completedStudiesShown')", visible: g.studyContainerStyle === "Detailed" },
 			{ text: "研究完成后自动重置研究 " + (g.restoreResearchAfterStudy ? "禁" : "启") + "用", onClick: "toggle('restoreResearchAfterStudy')" }
-		]); },
+		], "Study"); },
 		"Light": function () { showConfigModal("光", [ // Light
 			{ text: (g.glowOptions.noChromaGeneration ? "显" : "不显") + "示无色素生成的发光效果", onClick: toggle("g.glowOptions.noChromaGeneration") },
 			{ text: "若缺少成分色素，" + (g.haltChromaIfLacking ? "停止生成" : "切换至生成限制成分"), onClick: "toggle('haltChromaIfLacking')", visible: lightTiersUnlocked() > 1 },
 			{ text: "流明效果从 " + (g.showLightEffectsFrom0 ? "零" : "上一个流明") + "显示", onClick: "toggle('showLightEffectsFrom0')" },
 			{ text: achievement.label(815) + " 奖励 " + (g.ach815RewardActive ? "" : "未") + "激活", onClick: "toggle('g.ach815RewardActive')", visible: g.achievement[815] }
-		]); },
+		], "Light"); },
 		"Galaxy": function () { showConfigModal("星系", [ // Galaxy
 			{ text: (g.glowOptions.createGalaxy ? "显" : "不显") + "示可创建星系的发光效果", onClick: toggle("g.glowOptions.createGalaxy") }
-		]); },
+		], "Galaxy"); },
 		"Luck": function () { showConfigModal("运气", [ // Luck
 			{ text: (g.glowOptions.buyLuckRune ? "显" : "不显") + "示可购买足够运气符文的发光效果", onClick: toggle("g.glowOptions.buyLuckRune") },
 			{ text: (g.glowOptions.buyLuckUpgrade ? "显" : "不显") + "示可购买运气升级的发光效果", onClick: toggle("g.glowOptions.buyLuckUpgrade") }
-		]); },
+		], "Luck"); },
 		"Prismatic": function () { showConfigModal("棱镜", [ // Prismatic
 			{ text: (g.glowOptions.buyPrismaticUpgrade ? "显" : "不显") + "示可购买不可退还棱镜升级的发光效果", onClick: toggle("g.glowOptions.buyPrismaticUpgrade") },
 			{ text: (g.glowOptions.buyRefundablePrismaticUpgrade ? "显" : "不显") + "示可购买可退还棱镜升级的发光效果", onClick: toggle("g.glowOptions.buyRefundablePrismaticUpgrade") }
-		]); },
+		], "Prismatic"); },
 		"Antimatter": function () { showConfigModal("反物质", [ // Antimatter
 			{ text: "反物质数量显示在 " + (g.topResourcesShown.antimatter ? "屏幕顶部" : "反物质子标签页"), onClick: toggle("g.topResourcesShown.antimatter") },
 			{ text: (g.glowOptions.buyAntiAxis ? "显" : "不显") + "示可购买反轴的发光效果", onClick: toggle("g.glowOptions.buyAntiAxis") }
-		]); },
+		], "Antimatter"); },
 		"Wormhole Upgrades": function () { showConfigModal("虫洞升级", [ // Wormhole Upgrades
 			{ text: (g.glowOptions.buyAntiAxis ? "显" : "不显") + "示可购买虫洞升级的发光效果", onClick: toggle("g.glowOptions.buyWormholeUpgrade") }
-		]); },
+		], "Wormhole Upgrades"); },
 		"Study XIII": function () { showConfigModal("研究 XIII", [ // Study XIII
 			{ text: "在束缚查看器中 " + (g.study13ShowParentBindings ? "显示" : "隐藏") + "父束缚", onClick: toggle("g.study13ShowParentBindings") }
-		]); }
+		], "Study XIII"); }
 	};
 })();
 
@@ -3738,108 +3739,170 @@ function save() {
 
 function getSavedGame(saved, game, base = basesave) {
 	for (let prop in saved) {
-		if (saved.hasOwnProperty(prop)) {
-			let savedValue = saved[prop];
-			let gameValue = game[prop];
-			let baseValue = base[prop];
-			if (typeof baseValue === "undefined") continue;
-			if (baseValue instanceof Decimal) {
-				if (baseValue instanceof Decimal) game[prop] = (Decimal.valid(savedValue) ? N(savedValue) : baseValue);
-			} else if (typeof savedValue === 'object' && !Array.isArray(savedValue)) {
-				if (game.hasOwnProperty(prop) && Object.prototype.toString.call(gameValue) === '[object Object]') {
-					getSavedGame(savedValue, gameValue, baseValue);
-				} else if (!game.hasOwnProperty(prop)) {
-					continue;
-				} else {
-					game[prop] = {};
-					getSavedGame(savedValue, game[prop], baseValue);
-				}
-			} else if (savedValue instanceof Array) {
-				let out = [];
-				for (let i = 0; i < savedValue.length; i++) out.push((baseValue[i] instanceof Decimal) ? N(savedValue[i]) : savedValue[i]);
-				game[prop] = out;
+		if (!saved.hasOwnProperty(prop)) continue;
+		
+		let savedValue = saved[prop];
+		let gameValue = game[prop];
+		let baseValue = base[prop];
+		
+		if (typeof baseValue === "undefined") continue;
+		
+		if (baseValue instanceof Decimal) {
+			game[prop] = Decimal.valid(savedValue) ? N(savedValue) : baseValue;
+		} else if (typeof savedValue === 'object' && savedValue !== null && !Array.isArray(savedValue)) {
+			if (game.hasOwnProperty(prop) && gameValue !== null && typeof gameValue === 'object') {
+				getSavedGame(savedValue, gameValue, baseValue);
 			} else if (game.hasOwnProperty(prop)) {
-				if (baseValue instanceof Decimal) game[prop] = (Decimal.valid(savedValue) ? N(savedValue) : baseValue);
-				else game[prop] = savedValue;
+				game[prop] = {};
+				getSavedGame(savedValue, game[prop], baseValue);
+			}
+		} else if (Array.isArray(savedValue)) {
+			let out = [];
+			for (let i = 0; i < savedValue.length; i++) {
+				let baseItem = baseValue && baseValue[i];
+				if (baseItem instanceof Decimal) {
+					out.push(Decimal.valid(savedValue[i]) ? N(savedValue[i]) : baseItem);
+				} else {
+					out.push(savedValue[i]);
+				}
+			}
+			game[prop] = out;
+		} else if (game.hasOwnProperty(prop)) {
+			if (baseValue instanceof Decimal) {
+				game[prop] = Decimal.valid(savedValue) ? N(savedValue) : baseValue;
+			} else {
+				game[prop] = savedValue;
 			}
 		}
 	}
 }
 
 function load(savegame) {
-	// 如果传入的是字符串，可能是存档字符串
-	if (typeof savegame === "string") {
-		try {
-			// 先尝试直接解析JSON
-			savegame = JSON.parse(savegame);
-		} catch (e1) {
-			try {
-				console.log("尝试Base64解码存档...");
-				// 如果是旧的base64格式存档
-				const decoded = atob(savegame);
-				savegame = JSON.parse(decoded);
-				console.log("Base64解码成功");
-			} catch (e2) {
-				try {
-					// 尝试处理可能有URI编码的情况
-					const decoded = decodeURIComponent(atob(savegame));
-					savegame = JSON.parse(decoded);
-					console.log("Base64+URI解码成功");
-				} catch (e3) {
-					// 如果所有方法都失败，创建新游戏
-					console.warn("存档格式无法识别，创建新游戏。错误:", e1.message, e2.message, e3.message);
-					newGame();
-					return;
-				}
+	function validateSavegame(save) {
+		if (typeof save !== 'object' || save === null) return false;
+		const requiredFields = ['exoticmatter', 'XAxis', 'timePlayed'];
+		for (let field of requiredFields) {
+			if (save[field] === undefined) {
+				console.warn(`存档缺少必需字段: ${field}`);
+				return false;
 			}
 		}
-	} else if (savegame === null || savegame === undefined) {
-		// 如果传入的是null或undefined，创建新游戏
-		newGame();
-		return;
+		return true;
 	}
 	
-	if ((typeof savegame === "object") && (savegame !== null)) {
-		// 加载游戏
-		g = decimalStructuredClone(basesave);
-		getSavedGame(savegame, g);
-		// 旧版本兼容性
-		if (typeof g.stardustAutomatorMode !== "number") { g.stardustAutomatorMode = ["amount", "time", "mult", "pow"].indexOf(g.stardustAutomatorMode); }
-		if (typeof g.wormholeAutomatorMode !== "number") { g.wormholeAutomatorMode = ["amount", "time", "mult", "pow"].indexOf(g.wormholeAutomatorMode); }
-		if ((savegame.achievement === undefined) && (savegame.ownedAchievements !== undefined)) { g.achievement = Object.fromEntries(achievement.all.map(x => [x, savegame.ownedAchievements.map(x => String(x)).includes(String(x))])); }
-		if ((savegame.secretAchievement === undefined) && (savegame.ownedSecretAchievements !== undefined)) { g.secretAchievement = Object.fromEntries(Object.keys(secretAchievementList).map(x => [x, savegame.ownedSecretAchievements.map(x => String(x)).includes(String(x))])); }
-		totalAchievements = Object.values(g.achievement).map(x => x ? 1 : 0).sum();
-		totalSecretAchievements = Object.values(g.secretAchievement).map(x => x ? 1 : 0).sum();
-		if ((savegame.star === undefined) && (savegame.ownedStars !== undefined)) { g.star = Object.fromEntries(starList.map(x => [x, savegame.ownedStars.includes(x)])); }
-		if ((savegame.research === undefined) && (savegame.ownedResearch !== undefined) && (savegame.permanentResearch !== undefined)) { g.research = Object.fromEntries(Object.keys(research).map(x => [x, savegame.ownedResearch.includes(x) || savegame.permanentResearch.includes(x)])); }
-		if (savegame.lumens === undefined) { for (let i = 0; i < 9; i++) addLumens(i); }
-		totalStars = Object.values(g.star).map(x => x ? 1 : 0).sum();
-		totalResearch.temporary = researchList.nonPermanent.filter(x => research[x].type === "normal").map(x => (g.research[x]) ? 1 : 0).sum(); // 过滤研究类研究
-		totalResearch.permanent = researchList.permanent.map(x => g.research[x] ? 1 : 0).sum();
-		fixMasteryArrays();
-		for (let i = 0; i < 4; i++) g.observations[i] = N(g.observations[i]).fix(c.d0);
-		if (g.chroma.length === 8) g.chroma.push(c.d0);
-		if (g.lumens.length === 8) g.lumens.push(c.d0);
-		for (let i = 0; i < 9; i++) g.chroma[i] = N(g.chroma[i]).fix(c.d0);
-		g.TotalStardustResets = Math.max(g.StardustResets, g.TotalStardustResets);
-		g.TotalWormholeResets = Math.max(g.WormholeResets, g.TotalWormholeResets);
-		if (((typeof g.version) !== "number") && (g.EMDLevelDisplayInFooter === 0)) { g.version = 1; g.EMDLevelDisplayInFooter = 1; } // 默认设为"仅等级"
-		// 存档修复
-		if (typeof g.galaxies !== "number") g.galaxies = 0; // < 1.3.2
-		// 初始化
-		olddelta = Date.now();
-		g.dilatedTime += (olddelta - g.timeLeft) / 1000;
-		updateOverclockScrollbar();
-	} else {
-		// 如果存档格式不正确，创建新游戏
-		console.warn("存档格式不正确，创建新游戏");
+	try {
+		if (typeof savegame === "string") {
+			try {
+				savegame = JSON.parse(savegame);
+			} catch (e1) {
+				try {
+					console.log("尝试Base64解码存档...");
+					const decoded = atob(savegame);
+					savegame = JSON.parse(decoded);
+					console.log("Base64解码成功");
+				} catch (e2) {
+					try {
+						const decoded = decodeURIComponent(atob(savegame));
+						savegame = JSON.parse(decoded);
+						console.log("Base64+URI解码成功");
+					} catch (e3) {
+						console.error("存档解析失败:", e1.message, e2.message, e3.message);
+						newGame();
+						return;
+					}
+				}
+			}
+		} else if (savegame === null || savegame === undefined) {
+			newGame();
+			return;
+		}
+		
+		if ((typeof savegame === "object") && (savegame !== null)) {
+			if (!validateSavegame(savegame)) {
+				console.warn("存档验证失败，创建新游戏");
+				newGame();
+				return;
+			}
+			
+			g = decimalStructuredClone(basesave);
+			getSavedGame(savegame, g);
+			
+			if (typeof g.stardustAutomatorMode !== "number") {
+				g.stardustAutomatorMode = ["amount", "time", "mult", "pow"].indexOf(g.stardustAutomatorMode);
+			}
+			if (typeof g.wormholeAutomatorMode !== "number") {
+				g.wormholeAutomatorMode = ["amount", "time", "mult", "pow"].indexOf(g.wormholeAutomatorMode);
+			}
+			
+			if ((savegame.achievement === undefined) && (savegame.ownedAchievements !== undefined)) {
+				g.achievement = Object.fromEntries(achievement.all.map(x => [x, savegame.ownedAchievements.map(x => String(x)).includes(String(x))]));
+			}
+			if ((savegame.secretAchievement === undefined) && (savegame.ownedSecretAchievements !== undefined)) {
+				g.secretAchievement = Object.fromEntries(Object.keys(secretAchievementList).map(x => [x, savegame.ownedSecretAchievements.map(x => String(x)).includes(String(x))]));
+			}
+			
+			totalAchievements = Object.values(g.achievement).map(x => x ? 1 : 0).sum();
+			totalSecretAchievements = Object.values(g.secretAchievement).map(x => x ? 1 : 0).sum();
+			
+			if ((savegame.star === undefined) && (savegame.ownedStars !== undefined)) {
+				g.star = Object.fromEntries(starList.map(x => [x, savegame.ownedStars.includes(x)]));
+			}
+			if ((savegame.research === undefined) && (savegame.ownedResearch !== undefined) && (savegame.permanentResearch !== undefined)) {
+				g.research = Object.fromEntries(Object.keys(research).map(x => [x, savegame.ownedResearch.includes(x) || savegame.permanentResearch.includes(x)]));
+			}
+			
+			if (savegame.lumens === undefined) {
+				for (let i = 0; i < 9; i++) addLumens(i);
+			}
+			
+			totalStars = Object.values(g.star).map(x => x ? 1 : 0).sum();
+			totalResearch.temporary = researchList.nonPermanent.filter(x => research[x].type === "normal").map(x => (g.research[x]) ? 1 : 0).sum();
+			totalResearch.permanent = researchList.permanent.map(x => g.research[x] ? 1 : 0).sum();
+			
+			fixMasteryArrays();
+			
+			for (let i = 0; i < 4; i++) {
+				g.observations[i] = N(g.observations[i]).fix(c.d0);
+			}
+			
+			if (g.chroma && g.chroma.length === 8) g.chroma.push(c.d0);
+			if (g.lumens && g.lumens.length === 8) g.lumens.push(c.d0);
+			
+			if (g.chroma) {
+				for (let i = 0; i < Math.min(9, g.chroma.length); i++) {
+					g.chroma[i] = N(g.chroma[i]).fix(c.d0);
+				}
+			}
+			
+			g.TotalStardustResets = Math.max(g.StardustResets, g.TotalStardustResets);
+			g.TotalWormholeResets = Math.max(g.WormholeResets, g.TotalWormholeResets);
+			
+			if (((typeof g.version) !== "number") && (g.EMDLevelDisplayInFooter === 0)) {
+				g.version = 1;
+				g.EMDLevelDisplayInFooter = 1;
+			}
+			
+			if (typeof g.galaxies !== "number") g.galaxies = 0;
+			
+			olddelta = Date.now();
+			g.dilatedTime += (olddelta - g.timeLeft) / 1000;
+			updateOverclockScrollbar();
+			
+			console.log("存档加载成功");
+		} else {
+			console.warn("存档格式不正确，创建新游戏");
+			newGame();
+		}
+	} catch (e) {
+		console.error("加载存档时发生未预期错误:", e);
 		newGame();
 	}
 	
-	let date = new Date().getUTCFullYear() * 10000 + new Date().getUTCMonth() * 100 + new Date().getUTCDate();
 	savecounter++;
 }
-
+function newGame() {
+	
+}
 function openExport(x) {
 	popup({
 		text: "这是你的导出字符串：",
@@ -3857,27 +3920,68 @@ function importSave() {
 }
 
 function processImport(string, bypassWarning = false) {
+	if (!string || typeof string !== 'string' || string.trim() === '') {
+		popup({
+			text: "存档字符串不能为空！",
+			buttons: [["关闭", ""]]
+		});
+		return;
+	}
+	
 	if (string.substring(0, 34) === "AntimatterDimensionsSavefileFormat" && string.substring(string.length - 13) === "EndOfSavefile") {
 		addSecretAchievement(34);
-	} else {
-		let save = JSON.parse(atob(string));
-		if (!bypassWarning) {
-			let flag;
-			try {
-				let checkVariables = ["exoticmatter", "XAxis", "SAxis", "stardust", "stardustUpgrades", "masteryPower", "timePlayed", "stars", "darkmatter", "darkSAxis"];
-				let flag = false;
-				for (let i of checkVariables) if (save[i] === undefined) { flag = true; }
-			} catch { flag = true; }
-			if (flag) {
-				popup({
-					text: "这看起来不像有效的 EMD 存档，确定要导入吗？<br><br><i style=\"color:#ff0000;\">如果导入此内容，你的进度可能会被清空。</i>",
-					buttons: [["仍然导入", "processImport('" + string + "',true)"], ["取消", ""]]
-				});
-				return;
+		return;
+	}
+	
+	let save;
+	try {
+		save = JSON.parse(atob(string));
+	} catch (e) {
+		console.error("存档解析失败:", e);
+		popup({
+			text: "无法解析存档字符串！请确保你输入的是有效的存档数据。",
+			buttons: [["关闭", ""]]
+		});
+		return;
+	}
+	
+	if (!bypassWarning) {
+		let flag = false;
+		try {
+			const checkVariables = ["exoticmatter", "XAxis", "SAxis", "stardust", "stardustUpgrades", "masteryPower", "timePlayed", "stars", "darkmatter", "darkSAxis"];
+			for (let i of checkVariables) {
+				if (save[i] === undefined) {
+					flag = true;
+					break;
+				}
+			}
+		} catch {
+			flag = true;
+		}
+		
+		if (flag) {
+			popup({
+				text: "这看起来不像有效的 EMD 存档，确定要导入吗？<br><br><i style=\"color:#ff0000;\">如果导入此内容，你的进度可能会被清空。</i>",
+				buttons: [["仍然导入", `processImport('${string}', true)`], ["取消", ""]]
+			});
+			return;
+		}
+	}
+	
+	try {
+		load(save);
+		for (let i = 0; i < initSteps.length; i++) {
+			if (initSteps[i].onImport ?? false) {
+				initSteps[i].function();
 			}
 		}
-		load(save);
-		for (let i = 0; i < initSteps.length; i++) if (initSteps[i].onImport ?? false) initSteps[i].function();
+		notify("存档导入成功！", "#00ff00", "#000000");
+	} catch (e) {
+		console.error("存档导入失败:", e);
+		popup({
+			text: "存档导入过程中发生错误！",
+			buttons: [["关闭", ""]]
+		});
 	}
 }
 
