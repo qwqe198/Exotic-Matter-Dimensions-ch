@@ -3935,7 +3935,7 @@ function processImport(string, bypassWarning = false) {
 	
 	let save;
 	try {
-		save = JSON.parse(atob(string));
+		save = JSON.parse(string);
 	} catch (e) {
 		console.error("存档解析失败:", e);
 		popup({
@@ -4026,8 +4026,7 @@ function processPromo(str) {
 }
 
 function exportSave() {
-	// 直接传递未加密的存档字符串
-	openExport(localStorage.getItem("save"));
+	openExport(btoa(JSON.stringify(g)));
 }
 
 const wipeSavePassword = Array.random(["史莱克是爱，史莱克是生命", "要确认你想清除存档，请输入。", "foo", "是", "yes", "96", "g.exoticmatter++", "alemaninc，这是最糟糕的主意。", "这是史上最烂的游戏。", "M > O > U", "44031", "X > Y > Z", "存档选择器", "这是随机生成的短语", "玛雅嘻玛雅呼", "清除存档", "请不要删除我", "确认", "康菲姆", "克隆菲姆", "斯塔特马克", "泽恩诺罗尼", "反物质维度更好。", "难以置信的慢启动", "惊讶竟然没有什么能加速这个过程", "alemaninc 令人印象深刻地每周多次将破损代码部署到生产环境"]);

@@ -200,29 +200,274 @@ function lookupGetter(x,y){
 function capitalize(str) {return str.charAt(0).toUpperCase()+str.substring(1)}
 function toTitleCase(str) {return str.split(" ").map(x=>capitalize(x)).join(" ")}
 function ordinal(num){return num+(((num%10===1)&&(num%100!==11))?"st":((num%10===2)&&(num%100!==12))?"nd":((num%10===3)&&(num%100!==13))?"rd":"th")}
-const d = {		// d for "document"
-	element(elem) {
-		if (typeof elem === "object") return elem;		// if input is already an element
-		return document.getElementById(elem);				// if input is an id. Both retrieve an element, this is error detection.
-	},
-	innerHTML(element,value) {
-		d.element(element).innerHTML = value;						// sets the innerHTML of an element
-	},
-	display(element, value) {
-		d.element(element).style.display = value;				// sets the display mode of an element
-	},
-	/*
-	1 element: class name
-	2 elements: id, value
-	*/
-	class() {
-		if (arguments.length===1) return document.getElementsByClassName(arguments[0]);	 // gets elements by class name
-		if (arguments.length===2) d.element(arguments[0]).className = arguments[1];			 // sets the class of an element
-	},
-	tr(id,state) {
-		if (state) d.element(id).removeAttribute("hidden");				// shows and hides table rows
-		else d.element(id).setAttribute("hidden","hidden");
-	}
+const d = {
+    /**
+     * 获取 DOM 元素
+     * @param {string|HTMLElement} elem - 元素 ID 或元素对象
+     * @returns {HTMLElement|null} 找到的元素或 null
+     */
+    element(elem) {
+        if (!elem) {
+            console.warn("d.element(): 参数为空");
+            return null;
+        }
+        if (typeof elem === "object" && elem.nodeType !== undefined) {
+            return elem; // 如果输入已经是元素对象
+        }
+        if (typeof elem !== "string") {
+            console.warn("d.element(): 参数类型错误，期望 string 或 HTMLElement，收到:", typeof elem);
+            return null;
+        }
+        return document.getElementById(elem);
+    },
+    
+    /**
+     * 设置元素的 innerHTML
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} value - 要设置的 HTML 内容
+     */
+    innerHTML(element, value) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.innerHTML(): 找不到元素 "${element}"`);
+            return;
+        }
+        try {
+            el.innerHTML = value;
+        } catch (error) {
+            console.error("d.innerHTML(): 设置 innerHTML 失败:", error);
+        }
+    },
+    
+    /**
+     * 设置元素的 display 样式
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} value - display 值 (如 "block", "none", "inline")
+     */
+    display(element, value) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.display(): 找不到元素 "${element}"`);
+            return;
+        }
+        try {
+            el.style.display = value;
+        } catch (error) {
+            console.error("d.display(): 设置 display 失败:", error);
+        }
+    },
+    
+    /**
+     * 获取或设置元素的 class
+     * 用法:
+     *   d.class(className) - 获取指定类的元素列表
+     *   d.class(id, className) - 设置元素的 class
+     * @param {...any} args - 参数
+     */
+    class(...args) {
+        if (args.length === 1) {
+            const className = args[0];
+            if (typeof className !== "string") {
+                console.warn("d.class(): 类名必须是字符串");
+                return [];
+            }
+            return document.getElementsByClassName(className);
+        }
+        
+        if (args.length === 2) {
+            const [id, className] = args;
+            const el = this.element(id);
+            if (!el) {
+                console.warn(`d.class(): 找不到元素 "${id}"`);
+                return;
+            }
+            if (typeof className !== "string") {
+                console.warn("d.class(): 类名必须是字符串");
+                return;
+            }
+            el.className = className;
+        } else {
+            console.warn("d.class(): 参数数量错误，期望 1 或 2 个参数");
+        }
+    },
+    
+    /**
+     * 显示或隐藏表格行
+     * @param {string} id - 行元素的 ID
+     * @param {boolean} state - true 显示, false 隐藏
+     */
+    tr(id, state) {
+        const el = this.element(id);
+        if (!el) {
+            console.warn(`d.tr(): 找不到表格行 "${id}"`);
+            return;
+        }
+        
+        if (state) {
+            el.removeAttribute("hidden");
+        } else {
+            el.setAttribute("hidden", "hidden");
+        }
+    },
+    
+    /**
+     * 添加 CSS 类
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} className - 要添加的类名
+     */
+    addClass(element, className) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.addClass(): 找不到元素 "${element}"`);
+            return;
+        }
+        if (typeof className !== "string") {
+            console.warn("d.addClass(): 类名必须是字符串");
+            return;
+        }
+        if (!el.classList.contains(className)) {
+            el.classList.add(className);
+        }
+    },
+    
+    /**
+     * 移除 CSS 类
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} className - 要移除的类名
+     */
+    removeClass(element, className) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.removeClass(): 找不到元素 "${element}"`);
+            return;
+        }
+        if (typeof className !== "string") {
+            console.warn("d.removeClass(): 类名必须是字符串");
+            return;
+        }
+        el.classList.remove(className);
+    },
+    
+    /**
+     * 切换 CSS 类
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} className - 要切换的类名
+     */
+    toggleClass(element, className) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.toggleClass(): 找不到元素 "${element}"`);
+            return;
+        }
+        if (typeof className !== "string") {
+            console.warn("d.toggleClass(): 类名必须是字符串");
+            return;
+        }
+        el.classList.toggle(className);
+    },
+    
+    /**
+     * 设置元素文本内容
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} text - 要设置的文本
+     */
+    text(element, text) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.text(): 找不到元素 "${element}"`);
+            return;
+        }
+        try {
+            el.textContent = text;
+        } catch (error) {
+            console.error("d.text(): 设置 textContent 失败:", error);
+        }
+    },
+    
+    /**
+     * 设置元素属性
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} attribute - 属性名
+     * @param {string} value - 属性值
+     */
+    setAttr(element, attribute, value) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.setAttr(): 找不到元素 "${element}"`);
+            return;
+        }
+        if (typeof attribute !== "string") {
+            console.warn("d.setAttr(): 属性名必须是字符串");
+            return;
+        }
+        el.setAttribute(attribute, value);
+    },
+    
+    /**
+     * 获取元素属性
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {string} attribute - 属性名
+     * @returns {string|null} 属性值
+     */
+    getAttr(element, attribute) {
+        const el = this.element(element);
+        if (!el) {
+            console.warn(`d.getAttr(): 找不到元素 "${element}"`);
+            return null;
+        }
+        if (typeof attribute !== "string") {
+            console.warn("d.getAttr(): 属性名必须是字符串");
+            return null;
+        }
+        return el.getAttribute(attribute);
+    },
+    
+    /**
+     * 安全地执行函数
+     * @param {string|HTMLElement} element - 元素 ID 或元素对象
+     * @param {Function} callback - 要执行的回调函数
+     */
+    safeExec(element, callback) {
+        const el = this.element(element);
+        if (el && typeof callback === "function") {
+            try {
+                callback(el);
+            } catch (error) {
+                console.error(`d.safeExec(): 执行回调失败:`, error);
+            }
+        }
+    },
+    
+    /**
+     * 等待元素存在后执行操作
+     * @param {string} id - 元素 ID
+     * @param {Function} callback - 元素存在时执行的回调
+     * @param {number} timeout - 超时时间（毫秒），默认 5000
+     */
+    waitForElement(id, callback, timeout = 5000) {
+        if (typeof callback !== "function") {
+            console.warn("d.waitForElement(): 回调必须是函数");
+            return;
+        }
+        
+        const startTime = Date.now();
+        
+        function checkElement() {
+            const el = document.getElementById(id);
+            if (el) {
+                callback(el);
+                return;
+            }
+            
+            if (Date.now() - startTime < timeout) {
+                setTimeout(checkElement, 100);
+            } else {
+                console.warn(`d.waitForElement(): 等待元素 "${id}" 超时`);
+            }
+        }
+        
+        checkElement();
+    }
 };
 function hexToRGB(color) {return "rgb("+[parseInt(color.substring(1,3),16),parseInt(color.substring(3,5),16),parseInt(color.substring(5,7),16)].join(",")+")"}
 function blackOrWhiteContrast(color) {
