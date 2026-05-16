@@ -61,7 +61,7 @@ const study13 = {
 			base = "[1]"+basename([...available,...used])+"[2][0]"
 			for (let i=0;i<3;i++) {base = base.replace("["+i+"]",(used.length>i)?(study13.bindings[used[i]].nameMod[i]+" "):"")}
 		}
-		base = 首字母大写(base.trim())
+		base = capitalize(base.trim())
 		if (g.study13Bindings[25]) {
 			let special25Name = ["结晶空间","结晶时间","生命游戏","伟大领域","矩阵"][Math.floor(Math.sqrt(25+lvExcl25)*1438)%5]
 			base = special25Name+"《"+base+"》"
