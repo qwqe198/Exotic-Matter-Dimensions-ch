@@ -1626,7 +1626,7 @@ const achievementList = {
 
 	512: {
 		name: "今夜闪耀",
-		description: "摧毁宇宙时，拥有的暗星数量不超过普通星（含已分配）",
+		description: "在本次虫洞重置的任意时刻，拥有的暗星数量不超过普通星（含已分配）",
 		check: function () { return g.shiningBrightTonight; },
 		event: "wormholeResetBefore",
 		progress: function () {
@@ -1796,7 +1796,7 @@ const achievementList = {
 
 	520: {
 		name: "配给制",
-		description: "摧毁宇宙时，拥有的星尘升级不超过 15 个（注：轴自动购买器和精通解锁在重置时始终保留）",
+		description: "在本次虫洞重置的任意时刻，拥有的星尘升级不超过 15 个（注：轴自动购买器和精通解锁在重置时始终保留）",
 		check: function () {
 			return effectiveStardustUpgrades() <= 15;
 		},
