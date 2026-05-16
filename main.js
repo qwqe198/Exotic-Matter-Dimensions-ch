@@ -3733,8 +3733,8 @@ function progressBarOnClick() {
 }
 
 function save() {
-	// 直接保存为JSON字符串，不加密
-	localStorage.setItem("save", JSON.stringify(g));
+    // 强制保存为非加密格式
+    localStorage.setItem("save", JSON.stringify(g));
 }
 
 function getSavedGame(saved, game, base = basesave) {
@@ -3934,16 +3934,107 @@ function processImport(string, bypassWarning = false) {
 	}
 	
 	let save;
+	let rawInput = string;
+	
 	try {
+		// 尝试直接解析JSON
 		save = JSON.parse(string);
-	} catch (e) {
-		console.error("存档解析失败:", e);
+		
+		// 检查是否是加密格式
+		if (save._encrypted || save.isEncrypted || save.data) {
+			// 如果是加密格式，尝试处理
+			if (save.data && typeof save.data === 'string') {
+				try {
+					// 尝试Base64解码
+					const decoded = atob(save.data);
+					try {
+						// 尝试解析解码后的内容
+						save = JSON.parse(decoded);
+						// 成功解密，显示提示
+						popup({
+							text: "检测到加密存档，已自动解密并导入！",
+							buttons: [["确定", ""]]
+						});
+					} catch (e) {
+						// Base64解码成功但JSON解析失败
+						console.error("解密后的内容不是有效JSON:", e);
+						popup({
+							text: "存档解密失败，可能使用了不兼容的加密格式。",
+							buttons: [["关闭", ""]]
+						});
+						return;
+					}
+				} catch (e) {
+					// Base64解码失败
+					popup({
+						text: "无法解密存档，格式不支持。",
+						buttons: [["关闭", ""]]
+					});
+					return;
+				}
+			} else {
+				popup({
+					text: "检测到加密格式但无法识别加密方式。",
+					buttons: [["关闭", ""]]
+				});
+				return;
+			}
+		}
+	} catch (jsonError) {
+		// 如果不是JSON格式，尝试Base64解码
+		try {
+			// 检查是否是Base64编码
+			if (string.length % 4 === 0 && /^[A-Za-z0-9+/]*=*$/.test(string)) {
+				const decoded = atob(string);
+				try {
+					save = JSON.parse(decoded);
+					// 成功从Base64解码，显示提示
+					popup({
+						text: "检测到Base64编码存档，已自动解码并导入！",
+						buttons: [["确定", ""]]
+					});
+				} catch (e) {
+					// Base64解码成功但JSON解析失败
+					console.error("Base64解码成功但JSON解析失败:", e);
+					popup({
+						text: "Base64解码成功，但内容不是有效的存档数据。",
+						buttons: [["关闭", ""]]
+					});
+					return;
+				}
+			} else {
+				// 既不是JSON也不是Base64
+				throw new Error("既不是有效的JSON也不是Base64编码");
+			}
+		} catch (base64Error) {
+			console.error("存档解析失败:", jsonError, base64Error);
+			popup({
+				text: "无法解析存档字符串！请确保输入的是有效的JSON或Base64编码的存档数据。",
+				buttons: [["关闭", ""]]
+			});
+			return;
+		}
+	}
+	
+	// 继续原有的导入逻辑...
+	// 这里可以添加后续的处理代码
+	// 例如：loadSave(save) 或其他导入逻辑
+	
+	// 示例：将解密后的数据保存到localStorage
+	try {
+		localStorage.setItem("save", JSON.stringify(save));
 		popup({
-			text: "无法解析存档字符串！请确保你输入的是有效的存档数据。",
+			text: "存档导入成功！已保存为非加密格式。",
+			buttons: [["确定", "location.reload()"]]
+		});
+	} catch (e) {
+		console.error("保存存档失败:", e);
+		popup({
+			text: "保存存档失败：" + e.message,
 			buttons: [["关闭", ""]]
 		});
-		return;
 	}
+
 	
 	if (!bypassWarning) {
 		let flag = false;
