@@ -4037,9 +4037,9 @@ const achievementList = {
 
 	825: {
 		name: "自由即奴役",
-		description: "在没有任何普通或暗轴的免费等级低于购买等级的 2 倍的情况下，达到 1,600 总购买轴（所有类型）",
+		description: "在没有任何普通或暗轴的等级下，达到 540 总购买轴",
 		check: function () {
-			return stat.totalAxis.gte(1600) &&
+			return stat.totalAxis.gte(540) &&
 				g.ach825possible;
 		},
 		update: function () {
@@ -4080,7 +4080,7 @@ const achievementList = {
 			return g.ach825possible
 				? achievement.percent(
 					stat.totalAxis,
-					N(1600),
+					N(540),
 					0
 				)
 				: "失败";
