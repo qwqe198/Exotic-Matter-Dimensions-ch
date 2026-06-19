@@ -1024,7 +1024,7 @@ const study13 = {
 				breakpoints:[27,30,33,36,40,44,48,52,56,62,68,74,80,88,96,108,120,144],
 				type:"scaling",
 				eff:function(lv=study13.rewardLevels.nitro){return Decimal.FC_NN(1,0,Math.max(2**(1/9),Math.min(1.26-lv/100,2**(1/3))))},
-				desc:function(curr,prev){return 棱镜升级名("chromaOverdrive")+"每等级将色素成本增加"+scaleFormat(curr,prev,x=>this.eff(x).noLeadFormat(2))+"倍"}
+				desc:function(curr,prev){return prismaticUpgradeName("chromaOverdrive")+"每等级将色素成本增加"+scaleFormat(curr,prev,x=>this.eff(x).noLeadFormat(2))+"倍"}
 			},
 			wildfire:{
 				name:"白色野火",
@@ -1129,7 +1129,7 @@ const study13 = {
 				breakpoints:betaActive?[200,208,216,223,230,236,242,247,252,256]:[],
 				type:"scaling",
 				eff:function(lvs=study13.rewardLevels.hyperdrive,lvp=g.prismaticUpgrades.chromaOverdrive){return (lvs===0)?c.d1:lvp.add(c.d1).log10().mul((Math.log10(lvs)+1)**2/100).add(c.d1)},
-				desc:function(curr,prev){return "色素获取量提升到"+scaleFormat(curr,prev,x=>showFormulas?formulaFormat("1 + log(λ + 1)"+formulaFormat.mult((x===0)?c.d0:N((Math.log10(x)+1)**2/100))):this.eff(x).noLeadFormat(4))+"次幂（基于"+棱镜升级名("chromaOverdrive")+"等级）"}
+				desc:function(curr,prev){return "色素获取量提升到"+scaleFormat(curr,prev,x=>showFormulas?formulaFormat("1 + log(λ + 1)"+formulaFormat.mult((x===0)?c.d0:N((Math.log10(x)+1)**2/100))):this.eff(x).noLeadFormat(4))+"次幂（基于"+prismaticUpgradeName("chromaOverdrive")+"等级）"}
 			},
 			trinity3:{
 				name:"三位一体协同",

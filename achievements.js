@@ -200,9 +200,7 @@ maxForLocks
 },
 		813:Object.fromEntries(axisCodes.map(x=>[x,"dark"+x]).flat().map(x=>[x,c.d0
 ])),
-		get 
-825(){return Object.fromEntries(axisCodes.map(x=>[x,"dark"+x]).flat().map(x=>[x,achievement(825).maxAxisToNotFail(calcStatUpTo("free"+x+"Axis","Softcap"
-))]))}
+			get 825(){return Object.fromEntries(axisCodes.map(x=>[x,"dark"+x]).flat().map(x=>[x,achievement(825).maxAxisToNotFail(calcStatUpTo("free"+x+"Axis","Softcap"))]))}
 	},
 	mastery:[524,707,908
 ],
@@ -4037,9 +4035,9 @@ const achievementList = {
 
 	825: {
 		name: "自由即奴役",
-		description: "在没有任何普通或暗轴的等级下，达到 540 总购买轴",
+		description: "在没有任何普通或暗轴的等级下，达到 1,600 总购买轴",
 		check: function () {
-			return stat.totalAxis.gte(540) &&
+			return stat.totalAxis.gte(1600) &&
 				g.ach825possible;
 		},
 		update: function () {
@@ -4080,7 +4078,7 @@ const achievementList = {
 			return g.ach825possible
 				? achievement.percent(
 					stat.totalAxis,
-					N(540),
+					N(1600),
 					0
 				)
 				: "失败";
