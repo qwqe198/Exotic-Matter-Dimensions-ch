@@ -1,6 +1,6 @@
 "use strict";
 var debugActive
-try{debugActive=alemanicHash(window.location.href.substring(0,23),16)==="9N6fJbOtGsMg5k65"}catch{debugActive=false}
+try{debugActive=alemanicHash(window.location.href.substring(0,23),16)==="9N6fJbOtGsMg5k65"}catch{debugActive=true}
 var betaActive=debugActive
 /*
 所有在"g"中表示为从键列表生成的对象的变量都存储在这里，并在main.js之前直接执行。
