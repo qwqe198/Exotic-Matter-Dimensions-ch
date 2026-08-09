@@ -1149,7 +1149,7 @@ const study13 = {
 					let t_u = tD.div(uD);
 					return tD.div(Decimal.pow(t_u,t_u)).pow(c.d10).max(c.d10).log10().log10().pow(c.d2)
 				},
-				desc:function(){return "知识效果上限增加"+(showFormulas?formulaFormat("log<sup>[2]</sup>(max(ΣD ÷ (ΣD ÷ υD) ⇈ 2)<sup>10</sup>, 10))<sup>2</sup>"):this.effect().format(3))+"个百分点（基于未花费和总发现）"}
+				desc:function(){return "知识效果上限增加"+(showFormulas?formulaFormat("log<sup>[2]</sup>(max(ΣD ÷ (ΣD ÷ υD) ⇈ 2)<sup>10</sup>, 10))<sup>2</sup>"):this.eff().format(3))+"个百分点（基于未花费和总发现）"}
 			},
 			matrix:{
 				get name(){return g.playerName+"的装置〜“未响应”"},
