@@ -3487,7 +3487,7 @@ for (let type of luckRuneTypes) {for (let upg of luckUpgradeList[type]) {
 				color:"var(--binding)"
 			},{
 				label:"研究 32-4",
-				mod:function(){return luckUpgrades[type][upg].mul(researchEffect(32,4)).add(c.d1)},
+				mod:function(){return g.luckUpgrades[type][upg].mul(researchEffect(32,4)).add(c.d1)},
 				func:function(prev){return g.research.r32_4?prev.mul(this.mod()):prev},
 				text:function(){return "× "+this.mod().noLeadFormat(4)},
 				dependencies:[...researchDependencies("r32_4")],
